@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import type { Employee } from "@/lib/types";
+import { LEAVE_REASON_LABEL, type Employee } from "@/lib/types";
 
 const HEADERS = [
   "사번",
@@ -12,6 +12,10 @@ const HEADERS = [
   "입사일",
   "퇴사일",
   "상태",
+  "휴직시작일",
+  "휴직종료일",
+  "휴직사유",
+  "휴직사유상세",
   "메모",
 ];
 
@@ -57,6 +61,10 @@ export async function GET(request: Request) {
       e.hire_date,
       e.resignation_date,
       statusKo(e.status),
+      e.leave_start_date,
+      e.leave_end_date,
+      e.leave_reason ? LEAVE_REASON_LABEL[e.leave_reason] : null,
+      e.leave_reason_detail,
       e.notes,
     ]
       .map(csvEscape)

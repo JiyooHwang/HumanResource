@@ -6,7 +6,9 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   DEFAULT_ONBOARDING_TASKS,
+  LEAVE_REASON_LABEL_TO_VALUE,
   type EmployeeStatus,
+  type LeaveReason,
 } from "@/lib/types";
 
 type Row = {
@@ -19,6 +21,10 @@ type Row = {
   입사일?: string;
   퇴사일?: string;
   상태?: string;
+  휴직시작일?: string;
+  휴직종료일?: string;
+  휴직사유?: string;
+  휴직사유상세?: string;
   메모?: string;
 };
 
@@ -35,6 +41,10 @@ type ParsedEmployee = {
     hire_date: string | null;
     resignation_date: string | null;
     status: EmployeeStatus;
+    leave_start_date: string | null;
+    leave_end_date: string | null;
+    leave_reason: LeaveReason | null;
+    leave_reason_detail: string | null;
     notes: string | null;
   };
 };
@@ -78,6 +88,11 @@ function parseRow(row: Row, index: number): ParsedEmployee {
   }
   const statusRaw = (row.상태 ?? "").toString().trim();
   const status: EmployeeStatus = STATUS_MAP[statusRaw] ?? "active";
+  const isLeave = status === "on_leave";
+  const leaveReasonRaw = (row.휴직사유 ?? "").toString().trim();
+  const leaveReason: LeaveReason | null = isLeave
+    ? LEAVE_REASON_LABEL_TO_VALUE[leaveReasonRaw] ?? null
+    : null;
   return {
     ok: true,
     data: {
@@ -90,6 +105,13 @@ function parseRow(row: Row, index: number): ParsedEmployee {
       hire_date: normalizeDate(row.입사일),
       resignation_date: normalizeDate(row.퇴사일),
       status,
+      leave_start_date: isLeave ? normalizeDate(row.휴직시작일) : null,
+      leave_end_date: isLeave ? normalizeDate(row.휴직종료일) : null,
+      leave_reason: leaveReason,
+      leave_reason_detail:
+        isLeave && leaveReason === "other"
+          ? row.휴직사유상세?.toString().trim() || null
+          : null,
       notes: row.메모?.toString().trim() || null,
     },
   };
@@ -129,6 +151,10 @@ export default function ImportPage() {
       "입사일",
       "퇴사일",
       "상태",
+      "휴직시작일",
+      "휴직종료일",
+      "휴직사유",
+      "휴직사유상세",
       "메모",
     ];
     const sample = [
@@ -141,6 +167,10 @@ export default function ImportPage() {
       "2025-01-15",
       "",
       "재직",
+      "",
+      "",
+      "",
+      "",
       "",
     ];
     const csv =
@@ -216,9 +246,11 @@ export default function ImportPage() {
             첫 행은 헤더여야 하며, 컬럼명은 한국어 기준입니다.
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            필수: <code>이름</code> · 선택: <code>사번, 이메일, 연락처, 부서, 직급, 입사일, 퇴사일, 상태, 메모</code>
+            필수: <code>이름</code> · 선택: <code>사번, 이메일, 연락처, 부서, 직급, 입사일, 퇴사일, 상태, 휴직시작일, 휴직종료일, 휴직사유, 휴직사유상세, 메모</code>
             <br />
             상태 값: <code>재직</code>, <code>휴직</code>, <code>퇴직</code> (비우면 재직)
+            <br />
+            휴직사유 값: <code>육아</code>, <code>출산</code>, <code>무급</code>, <code>기타</code> (상태가 휴직일 때만 사용; 기타 선택 시 휴직사유상세에 직접 입력)
           </p>
         </div>
 

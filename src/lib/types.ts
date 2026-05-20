@@ -1,4 +1,23 @@
 export type EmployeeStatus = "active" | "on_leave" | "resigned";
+export type LeaveReason = "parental" | "maternity" | "unpaid" | "other";
+
+export const LEAVE_REASON_LABEL: Record<LeaveReason, string> = {
+  parental: "육아",
+  maternity: "출산",
+  unpaid: "무급",
+  other: "기타",
+};
+
+export const LEAVE_REASON_LABEL_TO_VALUE: Record<string, LeaveReason> = {
+  육아: "parental",
+  parental: "parental",
+  출산: "maternity",
+  maternity: "maternity",
+  무급: "unpaid",
+  unpaid: "unpaid",
+  기타: "other",
+  other: "other",
+};
 
 export type Employee = {
   id: string;
@@ -11,6 +30,10 @@ export type Employee = {
   hire_date: string | null;
   resignation_date: string | null;
   status: EmployeeStatus;
+  leave_start_date: string | null;
+  leave_end_date: string | null;
+  leave_reason: LeaveReason | null;
+  leave_reason_detail: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

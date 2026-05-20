@@ -6,10 +6,12 @@ import { createClient } from "@/lib/supabase/client";
 import {
   DEFAULT_OFFBOARDING_TASKS,
   DEFAULT_ONBOARDING_TASKS,
+  LEAVE_REASON_LABEL,
   type ChecklistItem,
   type ChecklistKind,
   type Employee,
   type EmployeeStatus,
+  type LeaveReason,
 } from "@/lib/types";
 
 type Props = {
@@ -31,6 +33,7 @@ export default function EmployeeEditor({ employee, checklist: initialChecklist }
   async function saveProfile() {
     setSavingProfile(true);
     setProfileMsg(null);
+    const isLeave = emp.status === "on_leave";
     const { error } = await supabase
       .from("employees")
       .update({
@@ -43,6 +46,11 @@ export default function EmployeeEditor({ employee, checklist: initialChecklist }
         hire_date: emp.hire_date,
         resignation_date: emp.resignation_date,
         status: emp.status,
+        leave_start_date: isLeave ? emp.leave_start_date : null,
+        leave_end_date: isLeave ? emp.leave_end_date : null,
+        leave_reason: isLeave ? emp.leave_reason : null,
+        leave_reason_detail:
+          isLeave && emp.leave_reason === "other" ? emp.leave_reason_detail : null,
         notes: emp.notes,
       })
       .eq("id", emp.id);
@@ -214,6 +222,61 @@ export default function EmployeeEditor({ employee, checklist: initialChecklist }
             </select>
           </Field>
         </div>
+
+        {emp.status === "on_leave" && (
+          <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-md p-4 space-y-3">
+            <div className="text-sm font-medium text-yellow-900">휴직 정보</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field label="휴직 시작일">
+                <input
+                  type="date"
+                  value={emp.leave_start_date ?? ""}
+                  onChange={(e) =>
+                    setEmp({ ...emp, leave_start_date: e.target.value || null })
+                  }
+                />
+              </Field>
+              <Field label="휴직 종료(예정)일">
+                <input
+                  type="date"
+                  value={emp.leave_end_date ?? ""}
+                  onChange={(e) =>
+                    setEmp({ ...emp, leave_end_date: e.target.value || null })
+                  }
+                />
+              </Field>
+              <Field label="휴직 사유">
+                <select
+                  value={emp.leave_reason ?? ""}
+                  onChange={(e) =>
+                    setEmp({
+                      ...emp,
+                      leave_reason: (e.target.value || null) as LeaveReason | null,
+                    })
+                  }
+                >
+                  <option value="">선택</option>
+                  {(Object.keys(LEAVE_REASON_LABEL) as LeaveReason[]).map((k) => (
+                    <option key={k} value={k}>
+                      {LEAVE_REASON_LABEL[k]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              {emp.leave_reason === "other" && (
+                <Field label="기타 사유 (직접 입력)">
+                  <input
+                    value={emp.leave_reason_detail ?? ""}
+                    onChange={(e) =>
+                      setEmp({ ...emp, leave_reason_detail: e.target.value || null })
+                    }
+                    placeholder="예: 학업, 질병 등"
+                  />
+                </Field>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mt-4">
           <label>메모</label>

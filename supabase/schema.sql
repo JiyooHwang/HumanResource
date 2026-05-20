@@ -15,6 +15,10 @@ create table if not exists public.employees (
   hire_date date,
   resignation_date date,
   status text not null default 'active' check (status in ('active','on_leave','resigned')),
+  leave_start_date date,
+  leave_end_date date,
+  leave_reason text check (leave_reason is null or leave_reason in ('parental','maternity','unpaid','other')),
+  leave_reason_detail text,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

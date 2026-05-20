@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { Employee, EmployeeStatus } from "@/lib/types";
+import { LEAVE_REASON_LABEL, type Employee, type EmployeeStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -119,6 +119,14 @@ export default async function EmployeesPage({
                 <td className="px-4 py-2">
                   <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${statusBadge[e.status]}`}>
                     {statusLabel[e.status]}
+                    {e.status === "on_leave" && e.leave_reason && (
+                      <>
+                        {" · "}
+                        {e.leave_reason === "other"
+                          ? e.leave_reason_detail || "기타"
+                          : LEAVE_REASON_LABEL[e.leave_reason]}
+                      </>
+                    )}
                   </span>
                 </td>
               </tr>
