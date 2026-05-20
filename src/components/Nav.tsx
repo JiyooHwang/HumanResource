@@ -9,8 +9,9 @@ export default function Nav({ email }: { email: string }) {
             인력 관리
           </Link>
           <nav className="flex items-center gap-4 text-sm text-gray-600">
-            <Link href="/employees" className="hover:text-gray-900">직원</Link>
+            <Link href="/employees" className="hover:text-gray-900">전체</Link>
             <Link href="/employees?status=active" className="hover:text-gray-900">재직</Link>
+            <Link href="/employees?status=on_leave" className="hover:text-gray-900">휴직</Link>
             <Link href="/employees?status=resigned" className="hover:text-gray-900">퇴직</Link>
           </nav>
         </div>
