@@ -1,0 +1,53 @@
+export type EmployeeStatus = "active" | "on_leave" | "resigned";
+
+export type Employee = {
+  id: string;
+  employee_number: string | null;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  department: string | null;
+  position: string | null;
+  hire_date: string | null;
+  resignation_date: string | null;
+  status: EmployeeStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChecklistKind = "onboarding" | "offboarding";
+
+export type ChecklistItem = {
+  id: string;
+  employee_id: string;
+  kind: ChecklistKind;
+  task: string;
+  completed: boolean;
+  completed_at: string | null;
+  completed_by: string | null;
+  sort_order: number;
+  created_at: string;
+};
+
+export const DEFAULT_ONBOARDING_TASKS = [
+  "근로계약서 작성",
+  "사번 발급",
+  "이메일 계정 생성",
+  "메신저/협업 툴 초대",
+  "노트북 지급",
+  "사원증/출입카드 발급",
+  "4대보험 신고",
+  "오리엔테이션 진행",
+];
+
+export const DEFAULT_OFFBOARDING_TASKS = [
+  "퇴직서 수령",
+  "인수인계 문서 확인",
+  "노트북 회수",
+  "사원증/출입카드 회수",
+  "계정 비활성화 (이메일/메신저/협업 툴)",
+  "4대보험 상실신고",
+  "퇴직금 정산",
+  "경력증명서 발급",
+];
