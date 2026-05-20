@@ -49,6 +49,12 @@ export default async function EmployeesPage({
             CSV 내보내기
           </a>
           <Link
+            href="/employees/import"
+            className="bg-white border border-gray-300 text-sm px-3 py-2 rounded-md hover:bg-gray-50"
+          >
+            엑셀 가져오기
+          </Link>
+          <Link
             href="/employees/new"
             className="bg-blue-600 text-white text-sm px-3 py-2 rounded-md hover:bg-blue-700"
           >
