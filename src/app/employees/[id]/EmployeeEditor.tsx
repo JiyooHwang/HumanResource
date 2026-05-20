@@ -11,15 +11,21 @@ import {
   type ChecklistKind,
   type Employee,
   type EmployeeStatus,
+  type LeaveHistory,
   type LeaveReason,
 } from "@/lib/types";
 
 type Props = {
   employee: Employee;
   checklist: ChecklistItem[];
+  leaveHistory: LeaveHistory[];
 };
 
-export default function EmployeeEditor({ employee, checklist: initialChecklist }: Props) {
+export default function EmployeeEditor({
+  employee,
+  checklist: initialChecklist,
+  leaveHistory,
+}: Props) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [emp, setEmp] = useState<Employee>(employee);
@@ -299,6 +305,8 @@ export default function EmployeeEditor({ employee, checklist: initialChecklist }
         </div>
       </div>
 
+      <LeaveHistorySection history={leaveHistory} />
+
       <ChecklistSection
         title="입사 체크리스트"
         kind="onboarding"
@@ -320,6 +328,52 @@ export default function EmployeeEditor({ employee, checklist: initialChecklist }
         seedLabel="퇴사 체크리스트 시작"
       />
     </div>
+  );
+}
+
+function LeaveHistorySection({ history }: { history: LeaveHistory[] }) {
+  if (history.length === 0) {
+    return (
+      <section className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-medium mb-2">휴직 이력</h2>
+        <p className="text-sm text-gray-500">아직 보관된 휴직 이력이 없습니다.</p>
+      </section>
+    );
+  }
+  return (
+    <section className="bg-white border border-gray-200 rounded-lg p-6">
+      <h2 className="text-lg font-medium mb-3">
+        휴직 이력 <span className="text-sm text-gray-500">{history.length}건</span>
+      </h2>
+      <table className="w-full text-sm">
+        <thead className="text-gray-600">
+          <tr className="border-b border-gray-100">
+            <th className="text-left py-2">시작일</th>
+            <th className="text-left py-2">종료일</th>
+            <th className="text-left py-2">사유</th>
+            <th className="text-left py-2">기록일</th>
+          </tr>
+        </thead>
+        <tbody>
+          {history.map((h) => (
+            <tr key={h.id} className="border-b border-gray-50">
+              <td className="py-2">{h.start_date ?? "-"}</td>
+              <td className="py-2">{h.end_date ?? "-"}</td>
+              <td className="py-2">
+                {h.reason === "other"
+                  ? h.reason_detail || "기타"
+                  : h.reason
+                    ? LEAVE_REASON_LABEL[h.reason]
+                    : "-"}
+              </td>
+              <td className="py-2 text-gray-500">
+                {new Date(h.created_at).toLocaleDateString("ko-KR")}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }
 

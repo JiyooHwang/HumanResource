@@ -1,20 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { LEAVE_REASON_LABEL, type Employee, type EmployeeStatus } from "@/lib/types";
+import type { Employee } from "@/lib/types";
+import EmployeeTable from "./EmployeeTable";
 
 export const dynamic = "force-dynamic";
-
-const statusLabel: Record<EmployeeStatus, string> = {
-  active: "재직",
-  on_leave: "휴직",
-  resigned: "퇴직",
-};
-
-const statusBadge: Record<EmployeeStatus, string> = {
-  active: "bg-green-100 text-green-800",
-  on_leave: "bg-yellow-100 text-yellow-800",
-  resigned: "bg-gray-200 text-gray-700",
-};
 
 export default async function EmployeesPage({
   searchParams,
@@ -37,10 +26,19 @@ export default async function EmployeesPage({
 
   const { data: employees, error } = await query;
 
+  const title =
+    sp.status === "active"
+      ? "재직 직원"
+      : sp.status === "on_leave"
+        ? "휴직 직원"
+        : sp.status === "resigned"
+          ? "퇴직 직원"
+          : "전체 직원";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">직원</h1>
+        <h1 className="text-2xl font-semibold">{title}</h1>
         <div className="flex gap-2">
           <a
             href={`/api/employees/export${sp.status ? `?status=${sp.status}` : ""}`}
@@ -90,57 +88,11 @@ export default async function EmployeesPage({
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="text-left px-4 py-2">이름</th>
-              <th className="text-left px-4 py-2">사번</th>
-              <th className="text-left px-4 py-2">부서</th>
-              <th className="text-left px-4 py-2">직급</th>
-              <th className="text-left px-4 py-2">입사일</th>
-              <th className="text-left px-4 py-2">퇴사일</th>
-              <th className="text-left px-4 py-2">상태</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(employees as Employee[] | null)?.map((e) => (
-              <tr key={e.id} className="border-t border-gray-100 hover:bg-gray-50">
-                <td className="px-4 py-2">
-                  <Link href={`/employees/${e.id}`} className="text-blue-600 hover:underline">
-                    {e.name}
-                  </Link>
-                </td>
-                <td className="px-4 py-2 text-gray-700">{e.employee_number ?? "-"}</td>
-                <td className="px-4 py-2 text-gray-700">{e.department ?? "-"}</td>
-                <td className="px-4 py-2 text-gray-700">{e.position ?? "-"}</td>
-                <td className="px-4 py-2 text-gray-700">{e.hire_date ?? "-"}</td>
-                <td className="px-4 py-2 text-gray-700">{e.resignation_date ?? "-"}</td>
-                <td className="px-4 py-2">
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${statusBadge[e.status]}`}>
-                    {statusLabel[e.status]}
-                    {e.status === "on_leave" && e.leave_reason && (
-                      <>
-                        {" · "}
-                        {e.leave_reason === "other"
-                          ? e.leave_reason_detail || "기타"
-                          : LEAVE_REASON_LABEL[e.leave_reason]}
-                      </>
-                    )}
-                  </span>
-                </td>
-              </tr>
-            ))}
-            {employees && employees.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                  등록된 직원이 없습니다.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <p className="text-xs text-gray-500">
+        ▸ 아이콘을 클릭하면 상태/휴직 정보를 바로 편집할 수 있습니다.
+      </p>
+
+      <EmployeeTable employees={(employees ?? []) as Employee[]} />
     </div>
   );
 }

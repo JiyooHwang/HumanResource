@@ -39,6 +39,16 @@ export type Employee = {
   updated_at: string;
 };
 
+export type LeaveHistory = {
+  id: string;
+  employee_id: string;
+  start_date: string | null;
+  end_date: string | null;
+  reason: LeaveReason | null;
+  reason_detail: string | null;
+  created_at: string;
+};
+
 export type ChecklistKind = "onboarding" | "offboarding";
 
 export type ChecklistItem = {
