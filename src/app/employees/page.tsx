@@ -13,7 +13,12 @@ export default async function EmployeesPage({
   const sp = await searchParams;
   const supabase = await createClient();
 
-  let query = supabase.from("employees").select("*").order("created_at", { ascending: false });
+  let query = supabase
+    .from("employees")
+    .select("*")
+    .order("department", { ascending: true, nullsFirst: false })
+    .order("position", { ascending: true, nullsFirst: false })
+    .order("name", { ascending: true });
 
   if (sp.status && ["active", "on_leave", "resigned"].includes(sp.status)) {
     query = query.eq("status", sp.status);
