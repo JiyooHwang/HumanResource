@@ -79,7 +79,7 @@ export default function EmployeeTable({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-      <table className="min-w-[1400px] w-full text-sm">
+      <table className="min-w-[1700px] w-full text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr className="whitespace-nowrap">
             <th className="text-left px-3 py-2 w-8"></th>
@@ -88,6 +88,8 @@ export default function EmployeeTable({
             <th className="text-left px-3 py-2">부서</th>
             <th className="text-left px-3 py-2">파트</th>
             <th className="text-left px-3 py-2">직급</th>
+            <th className="text-left px-3 py-2">이메일</th>
+            <th className="text-left px-3 py-2">연락처</th>
             <th className="text-left px-3 py-2">입사일</th>
             <th className="text-left px-3 py-2">상태</th>
             <th className="text-left px-3 py-2">
@@ -182,6 +184,20 @@ function Row({
             placeholder="-"
           />
         </td>
+        <td className="px-2 py-1 align-middle min-w-[14rem] whitespace-nowrap">
+          <CellText
+            value={emp.email ?? ""}
+            onSave={(v) => onSaveField({ email: v || null })}
+            placeholder="-"
+          />
+        </td>
+        <td className="px-2 py-1 align-middle min-w-[11rem] whitespace-nowrap">
+          <CellText
+            value={emp.phone ?? ""}
+            onSave={(v) => onSaveField({ phone: v || null })}
+            placeholder="-"
+          />
+        </td>
         <td className="px-2 py-1 align-middle min-w-[11rem] whitespace-nowrap">
           <CellText
             type="date"
@@ -223,7 +239,7 @@ function Row({
       </tr>
       {isExpanded && (
         <tr className="bg-gray-50 border-t border-gray-100">
-          <td colSpan={9} className="px-4 py-3">
+          <td colSpan={11} className="px-4 py-3">
             <ExpandedArea emp={emp} onSaveField={onSaveField} onDelete={onDelete} />
             {errorText && (
               <p className="text-sm text-red-700 mt-2">오류: {errorText}</p>
@@ -233,7 +249,7 @@ function Row({
       )}
       {!isExpanded && errorText && (
         <tr>
-          <td colSpan={9} className="px-4 py-1 text-sm text-red-700">
+          <td colSpan={11} className="px-4 py-1 text-sm text-red-700">
             오류: {errorText}
           </td>
         </tr>
