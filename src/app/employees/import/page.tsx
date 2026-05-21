@@ -510,6 +510,8 @@ export default function ImportPage() {
                   <th className="text-left px-3 py-2">부서</th>
                   <th className="text-left px-3 py-2">파트</th>
                   <th className="text-left px-3 py-2">직급</th>
+                  <th className="text-left px-3 py-2">이메일</th>
+                  <th className="text-left px-3 py-2">연락처</th>
                   <th className="text-left px-3 py-2">입사일</th>
                   <th className="text-left px-3 py-2">재직상태</th>
                 </tr>
@@ -553,6 +555,8 @@ export default function ImportPage() {
                     <td className="px-3 py-2 text-gray-700">{r.data?.department ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.part ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.position ?? "-"}</td>
+                    <td className="px-3 py-2 text-gray-700">{r.data?.email ?? "-"}</td>
+                    <td className="px-3 py-2 text-gray-700">{r.data?.phone ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.hire_date ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.status ?? "-"}</td>
                   </tr>
