@@ -61,6 +61,15 @@ const STATUS_MAP: Record<string, EmployeeStatus> = {
   resigned: "resigned",
 };
 
+// "-", "—", 빈 문자열, 공백 등은 모두 null로 처리
+function cleanString(v: unknown): string | null {
+  if (v === undefined || v === null) return null;
+  const s = v.toString().trim();
+  if (!s) return null;
+  if (s === "-" || s === "—" || s === "ㅡ" || s === "N/A" || s === "n/a") return null;
+  return s;
+}
+
 function normalizeDate(v: unknown): string | null {
   if (v === undefined || v === null || v === "") return null;
   // xlsx 가 Date 객체로 변환한 경우
@@ -99,13 +108,13 @@ function parseRow(row: Row, index: number): ParsedEmployee {
   return {
     ok: true,
     data: {
-      employee_number: row.사번?.toString().trim() || null,
+      employee_number: cleanString(row.사번),
       name,
-      email: row.이메일?.toString().trim() || null,
-      phone: row.연락처?.toString().trim() || null,
-      department: row.부서?.toString().trim() || null,
-      part: row.파트?.toString().trim() || null,
-      position: row.직급?.toString().trim() || null,
+      email: cleanString(row.이메일),
+      phone: cleanString(row.연락처),
+      department: cleanString(row.부서),
+      part: cleanString(row.파트),
+      position: cleanString(row.직급),
       hire_date: normalizeDate(row.입사일),
       resignation_date: normalizeDate(row.퇴사일),
       status,
@@ -113,10 +122,8 @@ function parseRow(row: Row, index: number): ParsedEmployee {
       leave_end_date: isLeave ? normalizeDate(row.휴직종료일) : null,
       leave_reason: leaveReason,
       leave_reason_detail:
-        isLeave && leaveReason === "other"
-          ? row.휴직사유상세?.toString().trim() || null
-          : null,
-      notes: row.메모?.toString().trim() || null,
+        isLeave && leaveReason === "other" ? cleanString(row.휴직사유상세) : null,
+      notes: cleanString(row.메모),
     },
   };
 }
