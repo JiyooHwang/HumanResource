@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import DepartmentSelect from "@/components/DepartmentSelect";
 import {
   DEFAULT_ONBOARDING_TASKS,
   LEAVE_REASON_LABEL,
@@ -20,6 +21,7 @@ export default function NewEmployeePage() {
     email: "",
     phone: "",
     department: "",
+    part: "",
     position: "",
     hire_date: "",
     status: "active" as EmployeeStatus,
@@ -50,6 +52,7 @@ export default function NewEmployeePage() {
         email: form.email || null,
         phone: form.phone || null,
         department: form.department || null,
+        part: form.part || null,
         position: form.position || null,
         hire_date: form.hire_date || null,
         status: form.status,
@@ -108,7 +111,18 @@ export default function NewEmployeePage() {
           </div>
           <div>
             <label>부서</label>
-            <input value={form.department} onChange={(e) => update("department", e.target.value)} />
+            <DepartmentSelect
+              value={form.department}
+              onChange={(v) => update("department", v)}
+            />
+          </div>
+          <div>
+            <label>파트</label>
+            <input
+              value={form.part}
+              onChange={(e) => update("part", e.target.value)}
+              placeholder="예: 1파트, 캐릭터파트"
+            />
           </div>
           <div>
             <label>직급</label>

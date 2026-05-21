@@ -11,6 +11,7 @@ create table if not exists public.employees (
   email text,
   phone text,
   department text,
+  part text,
   position text,
   hire_date date,
   resignation_date date,

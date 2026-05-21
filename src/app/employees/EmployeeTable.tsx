@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import DepartmentSelect from "@/components/DepartmentSelect";
 import {
   LEAVE_REASON_LABEL,
   type Employee,
@@ -27,6 +28,7 @@ type EditState = {
   status: EmployeeStatus;
   employee_number: string;
   department: string;
+  part: string;
   position: string;
   leave_start_date: string;
   leave_end_date: string;
@@ -53,6 +55,7 @@ function toEditState(e: Employee): EditState {
     status: e.status,
     employee_number: e.employee_number ?? "",
     department: e.department ?? "",
+    part: e.part ?? "",
     position: e.position ?? "",
     leave_start_date: e.leave_start_date ?? "",
     leave_end_date: e.leave_end_date ?? "",
@@ -99,6 +102,7 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
         status: e.status,
         employee_number: e.employee_number || null,
         department: e.department || null,
+        part: e.part || null,
         position: e.position || null,
         leave_start_date: isLeave ? e.leave_start_date || null : null,
         leave_end_date: isLeave ? e.leave_end_date || null : null,
@@ -161,6 +165,7 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
             <th className="text-left px-4 py-2">이름</th>
             <th className="text-left px-4 py-2">사번</th>
             <th className="text-left px-4 py-2">부서</th>
+            <th className="text-left px-4 py-2">파트</th>
             <th className="text-left px-4 py-2">직급</th>
             <th className="text-left px-4 py-2">입사일</th>
             <th className="text-left px-4 py-2">상태</th>
@@ -241,6 +246,7 @@ function Row({
         </td>
         <td className="px-4 py-2 text-gray-700">{emp.employee_number ?? "-"}</td>
         <td className="px-4 py-2 text-gray-700">{emp.department ?? "-"}</td>
+        <td className="px-4 py-2 text-gray-700">{emp.part ?? "-"}</td>
         <td className="px-4 py-2 text-gray-700">{emp.position ?? "-"}</td>
         <td className="px-4 py-2 text-gray-700">{emp.hire_date ?? "-"}</td>
         <td className="px-4 py-2">
@@ -274,7 +280,7 @@ function Row({
       </tr>
       {isOpen && edit && (
         <tr className="bg-gray-50 border-t border-gray-100">
-          <td colSpan={8} className="px-4 py-4">
+          <td colSpan={9} className="px-4 py-4">
             <div className="flex flex-wrap items-end gap-3">
               <div className="min-w-[7rem]">
                 <label className="text-xs">사번</label>
@@ -283,11 +289,19 @@ function Row({
                   onChange={(ev) => onUpdate({ employee_number: ev.target.value })}
                 />
               </div>
-              <div className="min-w-[8rem]">
+              <div className="min-w-[10rem]">
                 <label className="text-xs">부서</label>
-                <input
+                <DepartmentSelect
                   value={edit.department}
-                  onChange={(ev) => onUpdate({ department: ev.target.value })}
+                  onChange={(v) => onUpdate({ department: v })}
+                />
+              </div>
+              <div className="min-w-[8rem]">
+                <label className="text-xs">파트</label>
+                <input
+                  value={edit.part}
+                  onChange={(ev) => onUpdate({ part: ev.target.value })}
+                  placeholder="예: 1파트, 캐릭터파트"
                 />
               </div>
               <div className="min-w-[7rem]">

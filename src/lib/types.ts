@@ -26,6 +26,7 @@ export type Employee = {
   email: string | null;
   phone: string | null;
   department: string | null;
+  part: string | null;
   position: string | null;
   hire_date: string | null;
   resignation_date: string | null;

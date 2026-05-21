@@ -17,6 +17,7 @@ type Row = {
   이메일?: string;
   연락처?: string;
   부서?: string;
+  파트?: string;
   직급?: string;
   입사일?: string;
   퇴사일?: string;
@@ -37,6 +38,7 @@ type ParsedEmployee = {
     email: string | null;
     phone: string | null;
     department: string | null;
+    part: string | null;
     position: string | null;
     hire_date: string | null;
     resignation_date: string | null;
@@ -101,6 +103,7 @@ function parseRow(row: Row, index: number): ParsedEmployee {
       email: row.이메일?.toString().trim() || null,
       phone: row.연락처?.toString().trim() || null,
       department: row.부서?.toString().trim() || null,
+      part: row.파트?.toString().trim() || null,
       position: row.직급?.toString().trim() || null,
       hire_date: normalizeDate(row.입사일),
       resignation_date: normalizeDate(row.퇴사일),
@@ -147,6 +150,7 @@ export default function ImportPage() {
       "이메일",
       "연락처",
       "부서",
+      "파트",
       "직급",
       "입사일",
       "퇴사일",
@@ -162,7 +166,8 @@ export default function ImportPage() {
       "홍길동",
       "hong@example.com",
       "010-1234-5678",
-      "개발팀",
+      "modeling",
+      "1파트",
       "사원",
       "2025-01-15",
       "",
@@ -246,7 +251,7 @@ export default function ImportPage() {
             첫 행은 헤더여야 하며, 컬럼명은 한국어 기준입니다.
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            필수: <code>이름</code> · 선택: <code>사번, 이메일, 연락처, 부서, 직급, 입사일, 퇴사일, 상태, 휴직시작일, 휴직종료일, 휴직사유, 휴직사유상세, 메모</code>
+            필수: <code>이름</code> · 선택: <code>사번, 이메일, 연락처, 부서, 파트, 직급, 입사일, 퇴사일, 상태, 휴직시작일, 휴직종료일, 휴직사유, 휴직사유상세, 메모</code>
             <br />
             상태 값: <code>재직</code>, <code>휴직</code>, <code>퇴직</code> (비우면 재직)
             <br />

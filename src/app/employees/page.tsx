@@ -40,7 +40,11 @@ export default async function EmployeesPage({
     const da = departmentSortKey(a.department);
     const db = departmentSortKey(b.department);
     if (da !== db) return da < db ? -1 : 1;
-    return 0; // 같은 부서 내에서는 이미 직급·이름 순으로 정렬됨
+    // 3. 같은 부서 내에서는 파트 가나다순
+    const partA = a.part ?? "";
+    const partB = b.part ?? "";
+    if (partA !== partB) return partA < partB ? -1 : 1;
+    return 0; // 같은 파트 내에서는 이미 직급·이름 순으로 정렬됨
   });
 
   const title =

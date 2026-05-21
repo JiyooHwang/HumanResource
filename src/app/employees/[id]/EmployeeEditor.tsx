@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import DepartmentSelect from "@/components/DepartmentSelect";
 import {
   DEFAULT_OFFBOARDING_TASKS,
   DEFAULT_ONBOARDING_TASKS,
@@ -48,6 +49,7 @@ export default function EmployeeEditor({
         email: emp.email,
         phone: emp.phone,
         department: emp.department,
+        part: emp.part,
         position: emp.position,
         hire_date: emp.hire_date,
         resignation_date: emp.resignation_date,
@@ -192,9 +194,16 @@ export default function EmployeeEditor({
             />
           </Field>
           <Field label="부서">
-            <input
+            <DepartmentSelect
               value={emp.department ?? ""}
-              onChange={(e) => setEmp({ ...emp, department: e.target.value || null })}
+              onChange={(v) => setEmp({ ...emp, department: v || null })}
+            />
+          </Field>
+          <Field label="파트">
+            <input
+              value={emp.part ?? ""}
+              onChange={(e) => setEmp({ ...emp, part: e.target.value || null })}
+              placeholder="예: 1파트, 캐릭터파트"
             />
           </Field>
           <Field label="직급">
