@@ -109,7 +109,9 @@ export const DEPARTMENT_ORDER = [
 
 export function departmentSortKey(dept: string | null | undefined): string {
   if (!dept) return "￾"; // 미배정 직원은 맨 마지막
-  const norm = dept.replace(/\s+/g, "").toLowerCase();
+  // 겸직은 슬래시(/)로 구분 — 첫 부서를 기준으로 정렬
+  const primary = dept.split("/")[0];
+  const norm = primary.replace(/\s+/g, "").toLowerCase();
   for (let i = 0; i < DEPARTMENT_ORDER.length; i++) {
     const key = DEPARTMENT_ORDER[i].replace(/\s+/g, "").toLowerCase();
     // "Animation팀" 같은 접미사 허용: 부서명이 키워드로 시작하면 매칭

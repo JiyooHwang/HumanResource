@@ -2,6 +2,18 @@
 
 import { DEPARTMENT_ORDER } from "@/lib/types";
 
+const DATALIST_ID = "department-options";
+
+export function DepartmentDatalist() {
+  return (
+    <datalist id={DATALIST_ID}>
+      {DEPARTMENT_ORDER.map((d) => (
+        <option key={d} value={d} />
+      ))}
+    </datalist>
+  );
+}
+
 export default function DepartmentSelect({
   value,
   onChange,
@@ -11,22 +23,16 @@ export default function DepartmentSelect({
   onChange: (v: string) => void;
   className?: string;
 }) {
-  const known = DEPARTMENT_ORDER.some((d) => d === value);
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={className}
-    >
-      <option value="">(미배정)</option>
-      {DEPARTMENT_ORDER.map((d) => (
-        <option key={d} value={d}>
-          {d}
-        </option>
-      ))}
-      {value && !known && (
-        <option value={value}>{value} (목록 외)</option>
-      )}
-    </select>
+    <>
+      <input
+        list={DATALIST_ID}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="선택 또는 직접 입력 (겸직은 / 로 구분)"
+        className={className}
+      />
+      <DepartmentDatalist />
+    </>
   );
 }
