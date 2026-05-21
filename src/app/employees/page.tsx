@@ -22,6 +22,9 @@ export default async function EmployeesPage({
 
   if (sp.status && ["active", "on_leave", "resigned"].includes(sp.status)) {
     query = query.eq("status", sp.status);
+  } else {
+    // 전체 탭: 퇴직자 제외 (재직 + 휴직만)
+    query = query.in("status", ["active", "on_leave"]);
   }
   if (sp.q) {
     query = query.or(
