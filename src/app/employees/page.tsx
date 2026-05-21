@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { departmentSortKey, positionTopPriority, type Employee } from "@/lib/types";
 import EmployeeTable from "./EmployeeTable";
+import LeaveNotice from "./LeaveNotice";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,17 @@ export default async function EmployeesPage({
   }
 
   const { data: employees, error } = await query;
+
+  // 재직 페이지에 표시할 휴직자 요약 (재직 탭에서만)
+  let onLeaveList: Employee[] = [];
+  if (sp.status === "active") {
+    const { data: leaves } = await supabase
+      .from("employees")
+      .select("*")
+      .eq("status", "on_leave")
+      .order("leave_end_date", { ascending: true, nullsFirst: false });
+    onLeaveList = (leaves ?? []) as Employee[];
+  }
 
   const sorted = ((employees ?? []) as Employee[]).slice().sort((a, b) => {
     // 1. 부사장/본부장은 부서와 무관하게 최상단
@@ -84,6 +96,10 @@ export default async function EmployeesPage({
           </Link>
         </div>
       </div>
+
+      {sp.status === "active" && onLeaveList.length > 0 && (
+        <LeaveNotice employees={onLeaveList} />
+      )}
 
       <form className="flex gap-2" action="/employees">
         <input
