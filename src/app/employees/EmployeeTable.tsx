@@ -73,9 +73,9 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="min-w-[1200px] w-full text-sm">
         <thead className="bg-gray-50 text-gray-600">
-          <tr>
+          <tr className="whitespace-nowrap">
             <th className="text-left px-3 py-2 w-8"></th>
             <th className="text-left px-3 py-2">이름</th>
             <th className="text-left px-3 py-2">사번</th>
@@ -142,46 +142,46 @@ function Row({
             {isExpanded ? "▾" : "▸"}
           </button>
         </td>
-        <td className="px-3 py-2 align-middle">
+        <td className="px-3 py-2 align-middle whitespace-nowrap">
           <Link href={`/employees/${emp.id}`} className="text-blue-600 hover:underline">
             {emp.name}
           </Link>
         </td>
-        <td className="px-2 py-1 align-middle">
+        <td className="px-2 py-1 align-middle min-w-[7rem]">
           <CellText
             value={emp.employee_number ?? ""}
             onSave={(v) => onSaveField({ employee_number: v || null })}
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle min-w-[10rem]">
+        <td className="px-2 py-1 align-middle min-w-[12rem]">
           <CellDepartment
             value={emp.department ?? ""}
             onSave={(v) => onSaveField({ department: v || null })}
           />
         </td>
-        <td className="px-2 py-1 align-middle">
+        <td className="px-2 py-1 align-middle min-w-[8rem]">
           <CellText
             value={emp.part ?? ""}
             onSave={(v) => onSaveField({ part: v || null })}
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle">
+        <td className="px-2 py-1 align-middle min-w-[7rem]">
           <CellText
             value={emp.position ?? ""}
             onSave={(v) => onSaveField({ position: v || null })}
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle">
+        <td className="px-2 py-1 align-middle min-w-[10rem]">
           <CellText
             type="date"
             value={emp.hire_date ?? ""}
             onSave={(v) => onSaveField({ hire_date: v || null })}
           />
         </td>
-        <td className="px-2 py-1 align-middle">
+        <td className="px-2 py-1 align-middle min-w-[7rem]">
           <select
             value={emp.status}
             onChange={(e) => onChangeStatus(e.target.value as EmployeeStatus)}
@@ -193,7 +193,7 @@ function Row({
             <option value="resigned">퇴직</option>
           </select>
         </td>
-        <td className="px-2 py-1 align-middle">
+        <td className="px-2 py-1 align-middle min-w-[12rem] whitespace-nowrap">
           {emp.status === "resigned" ? (
             <CellText
               type="date"
