@@ -91,6 +91,7 @@ export const DEPARTMENT_ORDER = [
   "글로벌 사업 개발실",
   "IP사업실",
   "IP전략실",
+  "Producer실",
   "Directing실",
   "StoryDevelopment",
   "VisualDevelopment",
