@@ -79,7 +79,7 @@ export default function EmployeeTable({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-      <table className="min-w-[2100px] w-full text-sm">
+      <table className="min-w-[2000px] w-full text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr className="whitespace-nowrap">
             <th className="text-left px-3 py-2 w-8"></th>
@@ -184,14 +184,14 @@ function Row({
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle min-w-[14rem] whitespace-nowrap">
+        <td className="px-2 py-1 align-middle min-w-[12rem] whitespace-nowrap">
           <CellText
             value={emp.email ?? ""}
             onSave={(v) => onSaveField({ email: v || null })}
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle min-w-[11rem] whitespace-nowrap">
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
           <CellText
             value={emp.phone ?? ""}
             onSave={(v) => onSaveField({ phone: v || null })}

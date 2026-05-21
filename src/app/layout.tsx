@@ -22,7 +22,7 @@ export default async function RootLayout({
     <html lang="ko">
       <body>
         {user && <Nav email={user.email ?? ""} />}
-        <main className="max-w-[1920px] mx-auto px-4 py-6">{children}</main>
+        <main className="w-full px-4 py-6">{children}</main>
       </body>
     </html>
   );
