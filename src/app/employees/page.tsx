@@ -35,9 +35,10 @@ export default async function EmployeesPage({
 
   const { data: employees, error } = await query;
 
-  // 재직 페이지에 표시할 휴직자 요약 (재직 탭에서만)
+  // 전체 / 재직 페이지 상단에 표시할 휴직자 요약
+  const showLeaveNotice = !sp.status || sp.status === "active";
   let onLeaveList: Employee[] = [];
-  if (sp.status === "active") {
+  if (showLeaveNotice) {
     const { data: leaves } = await supabase
       .from("employees")
       .select("*")
@@ -97,7 +98,7 @@ export default async function EmployeesPage({
         </div>
       </div>
 
-      {sp.status === "active" && onLeaveList.length > 0 && (
+      {showLeaveNotice && onLeaveList.length > 0 && (
         <LeaveNotice employees={onLeaveList} />
       )}
 
