@@ -32,6 +32,7 @@ type Row = {
 type ParsedEmployee = {
   ok: boolean;
   error?: string;
+  duplicate?: boolean;
   data: {
     employee_number: string | null;
     name: string;
@@ -140,7 +141,40 @@ export default function ImportPage() {
     const json = XLSX.utils.sheet_to_json<Row>(sheet, { defval: "" });
 
     const parsed = json.map((r, i) => parseRow(r, i));
-    setRows(parsed);
+
+    // 중복 검사: 기존 직원의 사번/이름과 대조
+    const { data: existing } = await supabase
+      .from("employees")
+      .select("name, employee_number");
+    const existingNumbers = new Set(
+      (existing ?? [])
+        .map((e) => (e.employee_number ?? "").trim().toLowerCase())
+        .filter(Boolean),
+    );
+    const existingNames = new Set(
+      (existing ?? []).map((e) => (e.name ?? "").trim().toLowerCase()).filter(Boolean),
+    );
+
+    // 파일 내에서도 같은 사번/이름이 두 번 나오면 두번째부터 중복 처리
+    const seenNumbers = new Set<string>();
+    const seenNames = new Set<string>();
+    const marked = parsed.map((p) => {
+      if (!p.ok) return p;
+      const num = (p.data.employee_number ?? "").trim().toLowerCase();
+      const nm = p.data.name.trim().toLowerCase();
+      let dup = false;
+      if (num) {
+        if (existingNumbers.has(num) || seenNumbers.has(num)) dup = true;
+        seenNumbers.add(num);
+      }
+      if (!dup && nm) {
+        if (existingNames.has(nm) || seenNames.has(nm)) dup = true;
+        seenNames.add(nm);
+      }
+      return { ...p, duplicate: dup };
+    });
+
+    setRows(marked);
   }
 
   function downloadTemplate() {
@@ -194,9 +228,9 @@ export default function ImportPage() {
   }
 
   async function doImport() {
-    const valid = rows.filter((r) => r.ok).map((r) => r.data);
+    const valid = rows.filter((r) => r.ok && !r.duplicate).map((r) => r.data);
     if (valid.length === 0) {
-      setResultMsg("등록할 행이 없습니다.");
+      setResultMsg("새로 등록할 직원이 없습니다 (모두 중복 또는 오류).");
       return;
     }
     setImporting(true);
@@ -232,8 +266,9 @@ export default function ImportPage() {
     setTimeout(() => router.push("/employees"), 800);
   }
 
-  const okCount = rows.filter((r) => r.ok).length;
-  const errCount = rows.length - okCount;
+  const newCount = rows.filter((r) => r.ok && !r.duplicate).length;
+  const dupCount = rows.filter((r) => r.ok && r.duplicate).length;
+  const errCount = rows.filter((r) => !r.ok).length;
 
   return (
     <div className="space-y-4">
@@ -256,6 +291,8 @@ export default function ImportPage() {
             상태 값: <code>재직</code>, <code>휴직</code>, <code>퇴직</code> (비우면 재직)
             <br />
             휴직사유 값: <code>육아</code>, <code>출산</code>, <code>무급</code>, <code>기타</code> (상태가 휴직일 때만 사용; 기타 선택 시 휴직사유상세에 직접 입력)
+            <br />
+            <strong>중복 검사</strong>: 기존 직원과 <code>사번</code>이 같거나(있는 경우) <code>이름</code>이 같으면 자동으로 건너뜁니다.
           </p>
         </div>
 
@@ -297,18 +334,21 @@ export default function ImportPage() {
         <section className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <div className="text-sm">
-              총 {rows.length}행 · <span className="text-green-700">정상 {okCount}</span>
+              총 {rows.length}행 · <span className="text-green-700">신규 {newCount}</span>
+              {dupCount > 0 && (
+                <span className="text-gray-500"> · 중복 {dupCount} (건너뜀)</span>
+              )}
               {errCount > 0 && (
                 <span className="text-red-700"> · 오류 {errCount}</span>
               )}
             </div>
             <button
               type="button"
-              disabled={importing || okCount === 0}
+              disabled={importing || newCount === 0}
               onClick={doImport}
               className="bg-gray-900 text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 disabled:opacity-60"
             >
-              {importing ? "등록 중..." : `${okCount}명 등록`}
+              {importing ? "등록 중..." : `신규 ${newCount}명 등록`}
             </button>
           </div>
 
@@ -330,16 +370,22 @@ export default function ImportPage() {
                 {rows.map((r, i) => (
                   <tr
                     key={i}
-                    className={`border-t border-gray-100 ${r.ok ? "" : "bg-red-50"}`}
+                    className={`border-t border-gray-100 ${
+                      !r.ok ? "bg-red-50" : r.duplicate ? "bg-gray-50 text-gray-400" : ""
+                    }`}
                   >
                     <td className="px-3 py-2 text-gray-500">{i + 2}</td>
                     <td className="px-3 py-2">
-                      {r.ok ? (
-                        <span className="text-green-700 text-xs">정상</span>
-                      ) : (
+                      {!r.ok ? (
                         <span className="text-red-700 text-xs" title={r.error}>
                           오류
                         </span>
+                      ) : r.duplicate ? (
+                        <span className="text-gray-500 text-xs" title="이미 등록된 직원 (사번 또는 이름 일치)">
+                          중복
+                        </span>
+                      ) : (
+                        <span className="text-green-700 text-xs">신규</span>
                       )}
                     </td>
                     <td className="px-3 py-2">{r.data?.name ?? "-"}</td>
