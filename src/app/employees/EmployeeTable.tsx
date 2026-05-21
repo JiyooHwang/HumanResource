@@ -79,7 +79,7 @@ export default function EmployeeTable({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-      <table className="min-w-[1700px] w-full text-sm">
+      <table className="min-w-[2000px] w-full text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr className="whitespace-nowrap">
             <th className="text-left px-3 py-2 w-8"></th>
@@ -164,7 +164,7 @@ function Row({
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle min-w-[14rem] whitespace-nowrap">
+        <td className="px-2 py-1 align-middle min-w-[18rem] whitespace-nowrap">
           <CellDepartment
             value={emp.department ?? ""}
             onSave={(v) => onSaveField({ department: v || null })}
@@ -233,7 +233,9 @@ function Row({
               {formatLeavePeriod(emp)}
             </button>
           ) : (
-            <span className="text-gray-400">-</span>
+            <span className="text-gray-700" title="입사일 기준 근속 기간">
+              {calcTenure(emp.hire_date)}
+            </span>
           )}
         </td>
       </tr>
@@ -352,6 +354,26 @@ function formatLeavePeriod(e: Employee): string {
   const end = e.leave_end_date ?? "미정";
   if (!e.leave_start_date && !e.leave_end_date) return "기간 입력 ✎";
   return `${start} ~ ${end} ✎`;
+}
+
+function calcTenure(hireDate: string | null): string {
+  if (!hireDate) return "-";
+  const start = new Date(hireDate);
+  if (isNaN(start.getTime())) return "-";
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  if (now.getDate() < start.getDate()) months--;
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (years < 0) return "-"; // 미래 입사일
+  if (years === 0 && months === 0) return "1개월 미만";
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years}년`);
+  if (months > 0) parts.push(`${months}개월`);
+  return parts.join(" ");
 }
 
 /** 텍스트/날짜 인라인 셀 — 포커스 잃으면 변경된 경우 저장 */
