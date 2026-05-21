@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -123,7 +122,6 @@ function parseRow(row: Row, index: number): ParsedEmployee {
 }
 
 export default function ImportPage() {
-  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [rows, setRows] = useState<ParsedEmployee[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -326,7 +324,10 @@ export default function ImportPage() {
         updateExisting ? `, 업데이트 ${updatedCount}명` : ""
       }`,
     );
-    setTimeout(() => router.push("/employees"), 1200);
+    // 캐시 우회를 위해 하드 리로드
+    setTimeout(() => {
+      window.location.href = "/employees";
+    }, 1200);
   }
 
   const newCount = rows.filter((r) => r.ok && !r.duplicate).length;
