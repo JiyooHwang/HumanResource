@@ -25,6 +25,9 @@ const STATUS_BADGE: Record<EmployeeStatus, string> = {
 
 type EditState = {
   status: EmployeeStatus;
+  employee_number: string;
+  department: string;
+  position: string;
   leave_start_date: string;
   leave_end_date: string;
   leave_reason: "" | LeaveReason;
@@ -48,6 +51,9 @@ function formatPeriod(e: Employee): string {
 function toEditState(e: Employee): EditState {
   return {
     status: e.status,
+    employee_number: e.employee_number ?? "",
+    department: e.department ?? "",
+    position: e.position ?? "",
     leave_start_date: e.leave_start_date ?? "",
     leave_end_date: e.leave_end_date ?? "",
     leave_reason: e.leave_reason ?? "",
@@ -91,6 +97,9 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
       .from("employees")
       .update({
         status: e.status,
+        employee_number: e.employee_number || null,
+        department: e.department || null,
+        position: e.position || null,
         leave_start_date: isLeave ? e.leave_start_date || null : null,
         leave_end_date: isLeave ? e.leave_end_date || null : null,
         leave_reason: isLeave ? e.leave_reason || null : null,
@@ -114,6 +123,25 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
       setMsg((m) => (m?.id === emp.id ? null : m));
       setExpandedId((id) => (id === emp.id ? null : id));
     }, 1200);
+  }
+
+  async function remove(emp: Employee) {
+    if (
+      !confirm(
+        `'${emp.name}' 직원을 삭제할까요?\n체크리스트와 휴직 이력도 함께 삭제됩니다. 되돌릴 수 없습니다.`,
+      )
+    ) {
+      return;
+    }
+    setSavingId(emp.id);
+    const { error } = await supabase.from("employees").delete().eq("id", emp.id);
+    setSavingId(null);
+    if (error) {
+      setMsg({ id: emp.id, text: `오류: ${error.message}`, ok: false });
+      return;
+    }
+    setExpandedId(null);
+    router.refresh();
   }
 
   if (employees.length === 0) {
@@ -156,6 +184,7 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
                 onToggle={() => startEdit(e)}
                 onUpdate={(patch) => updateEdit(e.id, patch)}
                 onSave={() => save(e)}
+                onDelete={() => remove(e)}
                 saving={savingId === e.id}
                 msg={msg?.id === e.id ? msg : null}
               />
@@ -176,6 +205,7 @@ function Row({
   onToggle,
   onUpdate,
   onSave,
+  onDelete,
   saving,
   msg,
 }: {
@@ -187,6 +217,7 @@ function Row({
   onToggle: () => void;
   onUpdate: (patch: Partial<EditState>) => void;
   onSave: () => void;
+  onDelete: () => void;
   saving: boolean;
   msg: { text: string; ok: boolean } | null;
 }) {
@@ -245,6 +276,27 @@ function Row({
         <tr className="bg-gray-50 border-t border-gray-100">
           <td colSpan={8} className="px-4 py-4">
             <div className="flex flex-wrap items-end gap-3">
+              <div className="min-w-[7rem]">
+                <label className="text-xs">사번</label>
+                <input
+                  value={edit.employee_number}
+                  onChange={(ev) => onUpdate({ employee_number: ev.target.value })}
+                />
+              </div>
+              <div className="min-w-[8rem]">
+                <label className="text-xs">부서</label>
+                <input
+                  value={edit.department}
+                  onChange={(ev) => onUpdate({ department: ev.target.value })}
+                />
+              </div>
+              <div className="min-w-[7rem]">
+                <label className="text-xs">직급</label>
+                <input
+                  value={edit.position}
+                  onChange={(ev) => onUpdate({ position: ev.target.value })}
+                />
+              </div>
               <div className="min-w-[8rem]">
                 <label className="text-xs">상태</label>
                 <select
@@ -322,6 +374,15 @@ function Row({
                 className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-60"
               >
                 {saving ? "저장 중..." : "저장"}
+              </button>
+
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={saving}
+                className="text-sm text-red-600 hover:text-red-700 border border-red-200 px-3 py-2 rounded-md disabled:opacity-60"
+              >
+                삭제
               </button>
 
               {msg && (
