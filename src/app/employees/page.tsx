@@ -116,7 +116,7 @@ export default async function EmployeesPage({
         ▸ 아이콘을 클릭하면 상태/휴직 정보를 바로 편집할 수 있습니다.
       </p>
 
-      <EmployeeTable employees={sorted} />
+      <EmployeeTable employees={sorted} currentStatus={sp.status} />
     </div>
   );
 }

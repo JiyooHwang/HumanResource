@@ -12,7 +12,13 @@ import {
   type LeaveReason,
 } from "@/lib/types";
 
-export default function EmployeeTable({ employees }: { employees: Employee[] }) {
+export default function EmployeeTable({
+  employees,
+  currentStatus,
+}: {
+  employees: Employee[];
+  currentStatus?: string;
+}) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -84,7 +90,9 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
             <th className="text-left px-3 py-2">직급</th>
             <th className="text-left px-3 py-2">입사일</th>
             <th className="text-left px-3 py-2">상태</th>
-            <th className="text-left px-3 py-2">기간 / 퇴사일</th>
+            <th className="text-left px-3 py-2">
+              {currentStatus === "resigned" ? "퇴사일" : "기간"}
+            </th>
           </tr>
         </thead>
         <tbody>
