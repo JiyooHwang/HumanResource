@@ -33,6 +33,7 @@ type ParsedEmployee = {
   ok: boolean;
   error?: string;
   duplicate?: boolean;
+  existingId?: string;
   data: {
     employee_number: string | null;
     name: string;
@@ -127,6 +128,7 @@ export default function ImportPage() {
   const [rows, setRows] = useState<ParsedEmployee[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [seedOnboarding, setSeedOnboarding] = useState(true);
+  const [updateExisting, setUpdateExisting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
 
@@ -142,20 +144,19 @@ export default function ImportPage() {
 
     const parsed = json.map((r, i) => parseRow(r, i));
 
-    // 중복 검사: 기존 직원의 사번/이름과 대조
+    // 중복 검사: 기존 직원의 사번/이름과 대조 (id도 확보해서 업데이트 옵션에 활용)
     const { data: existing } = await supabase
       .from("employees")
-      .select("name, employee_number");
-    const existingNumbers = new Set(
-      (existing ?? [])
-        .map((e) => (e.employee_number ?? "").trim().toLowerCase())
-        .filter(Boolean),
-    );
-    const existingNames = new Set(
-      (existing ?? []).map((e) => (e.name ?? "").trim().toLowerCase()).filter(Boolean),
-    );
+      .select("id, name, employee_number");
+    const byNumber = new Map<string, string>();
+    const byName = new Map<string, string>();
+    (existing ?? []).forEach((e) => {
+      const num = (e.employee_number ?? "").trim().toLowerCase();
+      const nm = (e.name ?? "").trim().toLowerCase();
+      if (num) byNumber.set(num, e.id);
+      if (nm) byName.set(nm, e.id);
+    });
 
-    // 파일 내에서도 같은 사번/이름이 두 번 나오면 두번째부터 중복 처리
     const seenNumbers = new Set<string>();
     const seenNames = new Set<string>();
     const marked = parsed.map((p) => {
@@ -163,15 +164,26 @@ export default function ImportPage() {
       const num = (p.data.employee_number ?? "").trim().toLowerCase();
       const nm = p.data.name.trim().toLowerCase();
       let dup = false;
+      let existingId: string | undefined;
       if (num) {
-        if (existingNumbers.has(num) || seenNumbers.has(num)) dup = true;
+        if (byNumber.has(num)) {
+          dup = true;
+          existingId = byNumber.get(num);
+        } else if (seenNumbers.has(num)) {
+          dup = true;
+        }
         seenNumbers.add(num);
       }
       if (!dup && nm) {
-        if (existingNames.has(nm) || seenNames.has(nm)) dup = true;
+        if (byName.has(nm)) {
+          dup = true;
+          existingId = byName.get(nm);
+        } else if (seenNames.has(nm)) {
+          dup = true;
+        }
         seenNames.add(nm);
       }
-      return { ...p, duplicate: dup };
+      return { ...p, duplicate: dup, existingId };
     });
 
     setRows(marked);
@@ -228,42 +240,84 @@ export default function ImportPage() {
   }
 
   async function doImport() {
-    const valid = rows.filter((r) => r.ok && !r.duplicate).map((r) => r.data);
-    if (valid.length === 0) {
-      setResultMsg("새로 등록할 직원이 없습니다 (모두 중복 또는 오류).");
+    const newRows = rows.filter((r) => r.ok && !r.duplicate);
+    const dupRows = rows.filter((r) => r.ok && r.duplicate && r.existingId);
+
+    if (newRows.length === 0 && (!updateExisting || dupRows.length === 0)) {
+      setResultMsg("처리할 직원이 없습니다 (모두 중복 또는 오류).");
       return;
     }
     setImporting(true);
     setResultMsg(null);
 
-    const { data: inserted, error } = await supabase
-      .from("employees")
-      .insert(valid)
-      .select("id");
+    let insertedCount = 0;
+    let updatedCount = 0;
 
-    if (error || !inserted) {
-      setImporting(false);
-      setResultMsg(`오류: ${error?.message ?? "알 수 없는 오류"}`);
-      return;
+    // 1) 신규 직원 일괄 insert
+    if (newRows.length > 0) {
+      const { data: inserted, error } = await supabase
+        .from("employees")
+        .insert(newRows.map((r) => r.data))
+        .select("id");
+      if (error || !inserted) {
+        setImporting(false);
+        setResultMsg(`오류: ${error?.message ?? "알 수 없는 오류"}`);
+        return;
+      }
+      insertedCount = inserted.length;
+
+      if (seedOnboarding) {
+        const tasks = inserted.flatMap((e) =>
+          DEFAULT_ONBOARDING_TASKS.map((task, i) => ({
+            employee_id: e.id,
+            kind: "onboarding" as const,
+            task,
+            sort_order: i,
+          })),
+        );
+        if (tasks.length > 0) {
+          await supabase.from("checklist_items").insert(tasks);
+        }
+      }
     }
 
-    if (seedOnboarding) {
-      const tasks = inserted.flatMap((e) =>
-        DEFAULT_ONBOARDING_TASKS.map((task, i) => ({
-          employee_id: e.id,
-          kind: "onboarding" as const,
-          task,
-          sort_order: i,
-        })),
-      );
-      if (tasks.length > 0) {
-        await supabase.from("checklist_items").insert(tasks);
+    // 2) 기존 직원 업데이트 (옵션이 켜져 있을 때만, 빈 칸은 덮어쓰지 않음)
+    if (updateExisting && dupRows.length > 0) {
+      for (const r of dupRows) {
+        if (!r.existingId) continue;
+        const patch: Record<string, unknown> = {};
+        const d = r.data;
+        // 비어 있지 않은 값만 업데이트 — 엑셀에서 비워둔 칸은 기존 값 유지
+        if (d.employee_number) patch.employee_number = d.employee_number;
+        if (d.email) patch.email = d.email;
+        if (d.phone) patch.phone = d.phone;
+        if (d.department) patch.department = d.department;
+        if (d.part) patch.part = d.part;
+        if (d.position) patch.position = d.position;
+        if (d.hire_date) patch.hire_date = d.hire_date;
+        if (d.resignation_date) patch.resignation_date = d.resignation_date;
+        if (d.status) patch.status = d.status;
+        if (d.leave_start_date) patch.leave_start_date = d.leave_start_date;
+        if (d.leave_end_date) patch.leave_end_date = d.leave_end_date;
+        if (d.leave_reason) patch.leave_reason = d.leave_reason;
+        if (d.leave_reason_detail) patch.leave_reason_detail = d.leave_reason_detail;
+        if (d.notes) patch.notes = d.notes;
+        if (Object.keys(patch).length === 0) continue;
+        const { error: upErr } = await supabase
+          .from("employees")
+          .update(patch)
+          .eq("id", r.existingId);
+        if (!upErr) updatedCount++;
       }
     }
 
     setImporting(false);
-    setResultMsg(`${inserted.length}명 등록 완료`);
-    setTimeout(() => router.push("/employees"), 800);
+    setResultMsg(
+      `처리 완료 — 신규 ${insertedCount}명${
+        updateExisting ? `, 업데이트 ${updatedCount}명` : ""
+      }`,
+    );
+    setTimeout(() => router.push("/employees"), 1200);
   }
 
   const newCount = rows.filter((r) => r.ok && !r.duplicate).length;
@@ -328,6 +382,16 @@ export default function ImportPage() {
           />
           등록된 각 직원에 입사 체크리스트 기본 항목 자동 추가
         </label>
+
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            className="!w-auto"
+            checked={updateExisting}
+            onChange={(e) => setUpdateExisting(e.target.checked)}
+          />
+          기존 직원 정보도 업데이트 (사번 또는 이름이 일치하는 경우, 비어 있지 않은 값만 덮어씀)
+        </label>
       </section>
 
       {rows.length > 0 && (
@@ -336,7 +400,10 @@ export default function ImportPage() {
             <div className="text-sm">
               총 {rows.length}행 · <span className="text-green-700">신규 {newCount}</span>
               {dupCount > 0 && (
-                <span className="text-gray-500"> · 중복 {dupCount} (건너뜀)</span>
+                <span className={updateExisting ? "text-blue-700" : "text-gray-500"}>
+                  {" · "}
+                  {updateExisting ? `업데이트 ${dupCount}` : `중복 ${dupCount} (건너뜀)`}
+                </span>
               )}
               {errCount > 0 && (
                 <span className="text-red-700"> · 오류 {errCount}</span>
@@ -344,11 +411,15 @@ export default function ImportPage() {
             </div>
             <button
               type="button"
-              disabled={importing || newCount === 0}
+              disabled={importing || (newCount === 0 && (!updateExisting || dupCount === 0))}
               onClick={doImport}
               className="bg-gray-900 text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 disabled:opacity-60"
             >
-              {importing ? "등록 중..." : `신규 ${newCount}명 등록`}
+              {importing
+                ? "처리 중..."
+                : updateExisting && dupCount > 0
+                  ? `신규 ${newCount}명 + 업데이트 ${dupCount}명`
+                  : `신규 ${newCount}명 등록`}
             </button>
           </div>
 
@@ -371,7 +442,13 @@ export default function ImportPage() {
                   <tr
                     key={i}
                     className={`border-t border-gray-100 ${
-                      !r.ok ? "bg-red-50" : r.duplicate ? "bg-gray-50 text-gray-400" : ""
+                      !r.ok
+                        ? "bg-red-50"
+                        : r.duplicate
+                          ? updateExisting
+                            ? "bg-blue-50"
+                            : "bg-gray-50 text-gray-400"
+                          : ""
                     }`}
                   >
                     <td className="px-3 py-2 text-gray-500">{i + 2}</td>
@@ -381,9 +458,15 @@ export default function ImportPage() {
                           오류
                         </span>
                       ) : r.duplicate ? (
-                        <span className="text-gray-500 text-xs" title="이미 등록된 직원 (사번 또는 이름 일치)">
-                          중복
-                        </span>
+                        updateExisting ? (
+                          <span className="text-blue-700 text-xs" title="기존 직원 — 비어있지 않은 값만 업데이트됨">
+                            업데이트
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 text-xs" title="이미 등록된 직원 (사번 또는 이름 일치)">
+                            중복
+                          </span>
+                        )
                       ) : (
                         <span className="text-green-700 text-xs">신규</span>
                       )}
