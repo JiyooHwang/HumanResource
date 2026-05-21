@@ -127,6 +127,7 @@ export default function ImportPage() {
   const supabase = useMemo(() => createClient(), []);
   const [rows, setRows] = useState<ParsedEmployee[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [detectedHeaders, setDetectedHeaders] = useState<string[]>([]);
   const [seedOnboarding, setSeedOnboarding] = useState(true);
   const [updateExisting, setUpdateExisting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -141,6 +142,14 @@ export default function ImportPage() {
     const wb = XLSX.read(buf, { type: "array", cellDates: true });
     const sheet = wb.Sheets[wb.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json<Row>(sheet, { defval: "" });
+
+    // 첫 행에서 실제로 감지된 헤더 목록 (헤더 이름 일치 디버깅용)
+    const headerRow = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })[0] as
+      | unknown[]
+      | undefined;
+    setDetectedHeaders(
+      (headerRow ?? []).map((h) => (h === undefined || h === null ? "" : String(h))),
+    );
 
     const parsed = json.map((r, i) => parseRow(r, i));
 
@@ -373,6 +382,49 @@ export default function ImportPage() {
           {fileName && <span className="text-sm text-gray-600">{fileName}</span>}
         </div>
 
+        {detectedHeaders.length > 0 && (
+          <div className="text-xs bg-gray-50 border border-gray-200 rounded p-2">
+            <div className="text-gray-600 mb-1">감지된 컬럼 헤더:</div>
+            <div className="flex flex-wrap gap-1">
+              {detectedHeaders.map((h, i) => {
+                const known = [
+                  "사번",
+                  "이름",
+                  "이메일",
+                  "연락처",
+                  "부서",
+                  "파트",
+                  "직급",
+                  "입사일",
+                  "퇴사일",
+                  "상태",
+                  "휴직시작일",
+                  "휴직종료일",
+                  "휴직사유",
+                  "휴직사유상세",
+                  "메모",
+                ].includes(h);
+                return (
+                  <span
+                    key={i}
+                    className={`px-2 py-0.5 rounded ${
+                      known ? "bg-green-100 text-green-800" : "bg-gray-200 text-gray-600"
+                    }`}
+                    title={known ? "인식됨" : "인식되지 않음 — 정확한 이름 확인 필요"}
+                  >
+                    {h || "(빈 헤더)"}
+                  </span>
+                );
+              })}
+            </div>
+            {!detectedHeaders.includes("파트") && (
+              <div className="mt-2 text-amber-700">
+                ⚠ 파트 컬럼이 인식되지 않았습니다. 헤더 이름이 정확히 <code>파트</code>인지(앞뒤 공백 X), 또는 별도 컬럼인지 확인해 주세요.
+              </div>
+            )}
+          </div>
+        )}
+
         <label className="flex items-center gap-2 text-sm text-gray-700">
           <input
             type="checkbox"
@@ -432,6 +484,7 @@ export default function ImportPage() {
                   <th className="text-left px-3 py-2">이름</th>
                   <th className="text-left px-3 py-2">사번</th>
                   <th className="text-left px-3 py-2">부서</th>
+                  <th className="text-left px-3 py-2">파트</th>
                   <th className="text-left px-3 py-2">직급</th>
                   <th className="text-left px-3 py-2">입사일</th>
                   <th className="text-left px-3 py-2">재직상태</th>
@@ -474,6 +527,7 @@ export default function ImportPage() {
                     <td className="px-3 py-2">{r.data?.name ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.employee_number ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.department ?? "-"}</td>
+                    <td className="px-3 py-2 text-gray-700">{r.data?.part ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.position ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.hire_date ?? "-"}</td>
                     <td className="px-3 py-2 text-gray-700">{r.data?.status ?? "-"}</td>
