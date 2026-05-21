@@ -256,6 +256,7 @@ export default function ImportPage() {
   async function doImport() {
     const newRows = rows.filter((r) => r.ok && !r.duplicate);
     const dupRows = rows.filter((r) => r.ok && r.duplicate && r.existingId);
+    const dupNoId = rows.filter((r) => r.ok && r.duplicate && !r.existingId);
 
     if (newRows.length === 0 && (!updateExisting || dupRows.length === 0)) {
       setResultMsg("처리할 직원이 없습니다 (모두 중복 또는 오류).");
@@ -266,6 +267,7 @@ export default function ImportPage() {
 
     let insertedCount = 0;
     let updatedCount = 0;
+    const failures: string[] = [];
 
     // 1) 신규 직원 일괄 insert
     if (newRows.length > 0) {
@@ -275,7 +277,7 @@ export default function ImportPage() {
         .select("id");
       if (error || !inserted) {
         setImporting(false);
-        setResultMsg(`오류: ${error?.message ?? "알 수 없는 오류"}`);
+        setResultMsg(`신규 등록 오류: ${error?.message ?? "알 수 없는 오류"}`);
         return;
       }
       insertedCount = inserted.length;
@@ -295,13 +297,12 @@ export default function ImportPage() {
       }
     }
 
-    // 2) 기존 직원 업데이트 (옵션이 켜져 있을 때만, 빈 칸은 덮어쓰지 않음)
+    // 2) 기존 직원 업데이트
     if (updateExisting && dupRows.length > 0) {
       for (const r of dupRows) {
         if (!r.existingId) continue;
         const patch: Record<string, unknown> = {};
         const d = r.data;
-        // 비어 있지 않은 값만 업데이트 — 엑셀에서 비워둔 칸은 기존 값 유지
         if (d.employee_number) patch.employee_number = d.employee_number;
         if (d.email) patch.email = d.email;
         if (d.phone) patch.phone = d.phone;
@@ -316,25 +317,40 @@ export default function ImportPage() {
         if (d.leave_reason) patch.leave_reason = d.leave_reason;
         if (d.leave_reason_detail) patch.leave_reason_detail = d.leave_reason_detail;
         if (d.notes) patch.notes = d.notes;
-        if (Object.keys(patch).length === 0) continue;
-        const { error: upErr } = await supabase
+        if (Object.keys(patch).length === 0) {
+          failures.push(`${d.name}: 업데이트할 값 없음 (모든 칸 비어있음)`);
+          continue;
+        }
+        console.log(`[Import] Updating ${d.name} (id=${r.existingId}):`, patch);
+        const { error: upErr, data: upData } = await supabase
           .from("employees")
           .update(patch)
-          .eq("id", r.existingId);
-        if (!upErr) updatedCount++;
+          .eq("id", r.existingId)
+          .select("id, part");
+        if (upErr) {
+          failures.push(`${d.name}: ${upErr.message}`);
+        } else if (!upData || upData.length === 0) {
+          failures.push(`${d.name}: 업데이트는 성공했지만 행 0개 반영됨 (권한 또는 id 불일치)`);
+        } else {
+          updatedCount++;
+          console.log(`[Import] Updated ${d.name}, part now =`, upData[0]?.part);
+        }
       }
     }
 
     setImporting(false);
-    setResultMsg(
-      `처리 완료 — 신규 ${insertedCount}명${
-        updateExisting ? `, 업데이트 ${updatedCount}명` : ""
-      }`,
-    );
-    // 캐시 우회를 위해 하드 리로드
-    setTimeout(() => {
-      window.location.href = "/employees";
-    }, 1200);
+    const parts: string[] = [];
+    parts.push(`신규 ${insertedCount}명`);
+    if (updateExisting) parts.push(`업데이트 성공 ${updatedCount}명`);
+    if (dupNoId.length > 0)
+      parts.push(`매칭 실패 ${dupNoId.length}명 (existingId 없음)`);
+    if (failures.length > 0) parts.push(`실패 ${failures.length}건`);
+    let msg = `처리 완료 — ${parts.join(", ")}`;
+    if (failures.length > 0) {
+      msg += `\n실패 상세 (처음 5건):\n${failures.slice(0, 5).join("\n")}`;
+    }
+    msg += `\n\n결과 확인 후 직원 목록으로 이동하세요.`;
+    setResultMsg(msg);
   }
 
   const newCount = rows.filter((r) => r.ok && !r.duplicate).length;
@@ -548,8 +564,16 @@ export default function ImportPage() {
       )}
 
       {resultMsg && (
-        <div className="text-sm bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-md">
+        <div className="text-sm bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-md whitespace-pre-wrap">
           {resultMsg}
+          <div className="mt-3">
+            <a
+              href="/employees"
+              className="inline-block bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700"
+            >
+              직원 목록으로 이동
+            </a>
+          </div>
         </div>
       )}
     </div>
