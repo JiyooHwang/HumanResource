@@ -185,7 +185,7 @@ function Row({
           <select
             value={emp.status}
             onChange={(e) => onChangeStatus(e.target.value as EmployeeStatus)}
-            className="text-xs !py-1 !px-2"
+            className="text-sm !py-1 !px-2 min-w-[6rem]"
             disabled={saving}
           >
             <option value="active">재직</option>
