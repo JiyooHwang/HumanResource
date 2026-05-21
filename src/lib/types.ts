@@ -107,11 +107,12 @@ export const DEPARTMENT_ORDER = [
 export function departmentSortKey(dept: string | null | undefined): string {
   if (!dept) return "￾"; // 미배정 직원은 맨 마지막
   const norm = dept.replace(/\s+/g, "").toLowerCase();
-  const idx = DEPARTMENT_ORDER.findIndex(
-    (d) => d.replace(/\s+/g, "").toLowerCase() === norm,
-  );
-  if (idx >= 0) {
-    return idx.toString().padStart(3, "0") + "_" + dept;
+  for (let i = 0; i < DEPARTMENT_ORDER.length; i++) {
+    const key = DEPARTMENT_ORDER[i].replace(/\s+/g, "").toLowerCase();
+    // "Animation팀" 같은 접미사 허용: 부서명이 키워드로 시작하면 매칭
+    if (norm === key || norm.startsWith(key)) {
+      return i.toString().padStart(3, "0") + "_" + dept;
+    }
   }
   return "999_" + dept;
 }
@@ -122,8 +123,10 @@ const TOP_POSITIONS = ["부사장", "본부장"];
 export function positionTopPriority(position: string | null | undefined): number {
   if (!position) return 99;
   const norm = position.replace(/\s+/g, "").toLowerCase();
-  const idx = TOP_POSITIONS.findIndex(
-    (p) => p.replace(/\s+/g, "").toLowerCase() === norm,
-  );
-  return idx >= 0 ? idx : 99;
+  for (let i = 0; i < TOP_POSITIONS.length; i++) {
+    const key = TOP_POSITIONS[i].replace(/\s+/g, "").toLowerCase();
+    // "부사장/본부장", "부사장님" 등 변형 허용: 키워드가 포함되어 있으면 매칭
+    if (norm.includes(key)) return i;
+  }
+  return 99;
 }
