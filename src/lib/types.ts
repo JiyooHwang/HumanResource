@@ -84,3 +84,36 @@ export const DEFAULT_OFFBOARDING_TASKS = [
   "퇴직금 정산",
   "경력증명서 발급",
 ];
+
+// 부서 정렬 순서 (제작 과정 순). 목록에 없는 부서는 맨 뒤에 가나다순 배치.
+export const DEPARTMENT_ORDER = [
+  "부사장",
+  "글로벌 사업 개발실",
+  "IP사업실",
+  "IP전략실",
+  "StoryDevelopment",
+  "VisualDevelopment",
+  "modeling",
+  "Look Development",
+  "CFX",
+  "Animation",
+  "Lighting",
+  "FX",
+  "Blender",
+  "Composite",
+  "Unreal",
+];
+
+export function departmentSortKey(dept: string | null | undefined): string {
+  if (!dept) return "￾"; // 미배정 직원은 맨 마지막
+  const norm = dept.trim();
+  const idx = DEPARTMENT_ORDER.findIndex(
+    (d) => d.toLowerCase() === norm.toLowerCase(),
+  );
+  if (idx >= 0) {
+    // 두 자리 인덱스 + 부서명 (안정 정렬용)
+    return idx.toString().padStart(3, "0") + "_" + norm;
+  }
+  // 목록에 없는 부서는 그 뒤에 가나다순
+  return "999_" + norm;
+}

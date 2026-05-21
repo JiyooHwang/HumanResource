@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { Employee } from "@/lib/types";
+import { departmentSortKey, type Employee } from "@/lib/types";
 import EmployeeTable from "./EmployeeTable";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +13,10 @@ export default async function EmployeesPage({
   const sp = await searchParams;
   const supabase = await createClient();
 
+  // 1차 정렬은 JS에서 커스텀 부서 순서로 적용 (Supabase에서는 직급/이름만 미리 정렬)
   let query = supabase
     .from("employees")
     .select("*")
-    .order("department", { ascending: true, nullsFirst: false })
     .order("position", { ascending: true, nullsFirst: false })
     .order("name", { ascending: true });
 
@@ -30,6 +30,13 @@ export default async function EmployeesPage({
   }
 
   const { data: employees, error } = await query;
+
+  const sorted = ((employees ?? []) as Employee[]).slice().sort((a, b) => {
+    const da = departmentSortKey(a.department);
+    const db = departmentSortKey(b.department);
+    if (da !== db) return da < db ? -1 : 1;
+    return 0; // 이미 직급·이름 순으로 정렬되어 있음
+  });
 
   const title =
     sp.status === "active"
@@ -97,7 +104,7 @@ export default async function EmployeesPage({
         ▸ 아이콘을 클릭하면 상태/휴직 정보를 바로 편집할 수 있습니다.
       </p>
 
-      <EmployeeTable employees={(employees ?? []) as Employee[]} />
+      <EmployeeTable employees={sorted} />
     </div>
   );
 }
