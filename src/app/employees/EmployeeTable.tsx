@@ -32,6 +32,19 @@ type EditState = {
   resignation_date: string;
 };
 
+function formatPeriod(e: Employee): string {
+  if (e.status === "on_leave") {
+    const start = e.leave_start_date ?? "?";
+    const end = e.leave_end_date ?? "미정";
+    if (!e.leave_start_date && !e.leave_end_date) return "기간 미입력";
+    return `${start} ~ ${end}`;
+  }
+  if (e.status === "resigned") {
+    return e.resignation_date ?? "퇴사일 미입력";
+  }
+  return "-";
+}
+
 function toEditState(e: Employee): EditState {
   return {
     status: e.status,
@@ -116,14 +129,14 @@ export default function EmployeeTable({ employees }: { employees: Employee[] }) 
       <table className="w-full text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr>
-            <th className="text-left px-4 py-2 w-10"></th>
+            <th className="text-left px-4 py-2 w-8"></th>
             <th className="text-left px-4 py-2">이름</th>
             <th className="text-left px-4 py-2">사번</th>
             <th className="text-left px-4 py-2">부서</th>
             <th className="text-left px-4 py-2">직급</th>
             <th className="text-left px-4 py-2">입사일</th>
-            <th className="text-left px-4 py-2">퇴사일</th>
             <th className="text-left px-4 py-2">상태</th>
+            <th className="text-left px-4 py-2">기간 / 퇴사일</th>
           </tr>
         </thead>
         <tbody>
@@ -199,9 +212,13 @@ function Row({
         <td className="px-4 py-2 text-gray-700">{emp.department ?? "-"}</td>
         <td className="px-4 py-2 text-gray-700">{emp.position ?? "-"}</td>
         <td className="px-4 py-2 text-gray-700">{emp.hire_date ?? "-"}</td>
-        <td className="px-4 py-2 text-gray-700">{emp.resignation_date ?? "-"}</td>
         <td className="px-4 py-2">
-          <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${STATUS_BADGE[emp.status]}`}>
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`inline-block px-2 py-0.5 rounded-full text-xs cursor-pointer hover:opacity-80 ${STATUS_BADGE[emp.status]}`}
+            title="클릭해서 상태 변경"
+          >
             {STATUS_LABEL[emp.status]}
             {emp.status === "on_leave" && emp.leave_reason && (
               <>
@@ -211,7 +228,17 @@ function Row({
                   : LEAVE_REASON_LABEL[emp.leave_reason]}
               </>
             )}
-          </span>
+          </button>
+        </td>
+        <td className="px-4 py-2 text-gray-700">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="text-left hover:text-gray-900"
+            title="클릭해서 편집"
+          >
+            {formatPeriod(emp)}
+          </button>
         </td>
       </tr>
       {isOpen && edit && (
