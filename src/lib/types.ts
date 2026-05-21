@@ -106,14 +106,12 @@ export const DEPARTMENT_ORDER = [
 
 export function departmentSortKey(dept: string | null | undefined): string {
   if (!dept) return "￾"; // 미배정 직원은 맨 마지막
-  const norm = dept.trim();
+  const norm = dept.replace(/\s+/g, "").toLowerCase();
   const idx = DEPARTMENT_ORDER.findIndex(
-    (d) => d.toLowerCase() === norm.toLowerCase(),
+    (d) => d.replace(/\s+/g, "").toLowerCase() === norm,
   );
   if (idx >= 0) {
-    // 두 자리 인덱스 + 부서명 (안정 정렬용)
-    return idx.toString().padStart(3, "0") + "_" + norm;
+    return idx.toString().padStart(3, "0") + "_" + dept;
   }
-  // 목록에 없는 부서는 그 뒤에 가나다순
-  return "999_" + norm;
+  return "999_" + dept;
 }
