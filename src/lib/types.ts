@@ -126,6 +126,15 @@ export const DEPARTMENT_ORDER = [
   "Blender",
   "Composite",
   "Unreal",
+  "제작기획팀",
+  "Art팀",
+  "3D팀",
+  "Flame1팀",
+  "Flame2팀",
+  "Flame3팀",
+  "Flame4팀",
+  "AI팀",
+  "DI팀",
 ];
 
 export function headquartersSortKey(hq: string | null | undefined): string {
