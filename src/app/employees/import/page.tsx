@@ -114,7 +114,15 @@ function parseRow(row: Row, index: number): ParsedEmployee {
     };
   }
   const statusRaw = (col(row, "재직상태", "상태", "현황") ?? "").toString().trim();
-  const status: EmployeeStatus = STATUS_MAP[statusRaw] ?? "active";
+  let status: EmployeeStatus = STATUS_MAP[statusRaw] ?? "active";
+
+  // 휴직 날짜가 있으면 자동으로 휴직 처리
+  const leaveStart = normalizeDate(col(row, "휴직일자", "휴직시작일"));
+  const leaveEnd = normalizeDate(col(row, "휴직종료예정일", "휴직종료 예정일", "휴직종료일"));
+  if (status === "active" && (leaveStart || leaveEnd)) {
+    status = "on_leave";
+  }
+
   const isLeave = status === "on_leave";
   const leaveReasonRaw = (col(row, "휴직사유") ?? "").toString().trim();
   const leaveReason: LeaveReason | null = isLeave
@@ -138,8 +146,8 @@ function parseRow(row: Row, index: number): ParsedEmployee {
       resignation_date: normalizeDate(col(row, "퇴사일", "실제퇴사일")),
       last_work_date: normalizeDate(col(row, "마지막근무일", "마지막 근무일")),
       status,
-      leave_start_date: normalizeDate(col(row, "휴직일자", "휴직시작일")),
-      leave_end_date: normalizeDate(col(row, "휴직종료예정일", "휴직종료 예정일", "휴직종료일")),
+      leave_start_date: leaveStart,
+      leave_end_date: leaveEnd,
       leave_reason: leaveReason,
       return_from_leave_date: normalizeDate(col(row, "복직일자")),
       badge_card_returned: cleanString(col(row, "사원증법인카드반납", "사원증/법인카드 반납여부", "사원증/법인카드반납")),

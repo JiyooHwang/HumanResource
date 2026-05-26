@@ -30,6 +30,18 @@ export default function EmployeeTable({
   async function saveField(empId: string, patch: Record<string, unknown>) {
     setSavingId(empId);
     setErrMsg(null);
+
+    // 휴직 날짜 입력 시 자동으로 휴직 상태로 전환
+    if (
+      (patch.leave_start_date || patch.leave_end_date) &&
+      !patch.status
+    ) {
+      const emp = employees.find((e) => e.id === empId);
+      if (emp && emp.status === "active") {
+        patch.status = "on_leave";
+      }
+    }
+
     const { error } = await supabase.from("employees").update(patch).eq("id", empId);
     setSavingId(null);
     if (error) {
