@@ -10,41 +10,7 @@ import {
   type LeaveReason,
 } from "@/lib/types";
 
-type Row = {
-  직원번호?: string;
-  사번?: string;
-  성명?: string;
-  이름?: string;
-  본부?: string;
-  소속?: string;
-  부서?: string;
-  파트?: string;
-  직책?: string;
-  직급?: string;
-  근무지?: string;
-  재직상태?: string;
-  상태?: string;
-  입사확정일자?: string;
-  입사일?: string;
-  출근일?: string;
-  퇴사일?: string;
-  마지막근무일?: string;
-  휴직일자?: string;
-  휴직시작일?: string;
-  휴직종료예정일?: string;
-  휴직종료일?: string;
-  복직일자?: string;
-  휴대전화?: string;
-  연락처?: string;
-  사내메일?: string;
-  이메일?: string;
-  외부메일?: string;
-  비고?: string;
-  메모?: string;
-  사원증법인카드반납?: string;
-  휴직사유?: string;
-  휴직사유상세?: string;
-};
+type Row = Record<string, unknown>;
 
 type ParsedEmployee = {
   ok: boolean;
@@ -80,9 +46,12 @@ type ParsedEmployee = {
 const STATUS_MAP: Record<string, EmployeeStatus> = {
   재직: "active",
   active: "active",
+  입사: "active",
+  복직: "active",
   휴직: "on_leave",
   on_leave: "on_leave",
   퇴직: "resigned",
+  퇴사: "resigned",
   resigned: "resigned",
 };
 
@@ -114,8 +83,23 @@ function normalizeDate(v: unknown): string | null {
   return s; // 그대로 시도 (Supabase가 거부하면 에러로 표시)
 }
 
+// 컬럼명 변형에 유연하게 대응 (공백/슬래시/약어 무시)
+function col(row: Row, ...candidates: string[]): unknown {
+  for (const c of candidates) {
+    if (row[c] !== undefined) return row[c];
+  }
+  // 공백·슬래시 제거해서 재시도
+  const keys = Object.keys(row);
+  for (const c of candidates) {
+    const norm = c.replace(/[\s/]/g, "").toLowerCase();
+    const found = keys.find((k) => k.replace(/[\s/]/g, "").toLowerCase() === norm);
+    if (found && row[found] !== undefined) return row[found];
+  }
+  return undefined;
+}
+
 function parseRow(row: Row, index: number): ParsedEmployee {
-  const name = (row.성명 ?? row.이름 ?? "").toString().trim();
+  const name = (col(row, "성명", "이름") ?? "").toString().trim();
   if (!name) {
     return {
       ok: false,
@@ -123,39 +107,39 @@ function parseRow(row: Row, index: number): ParsedEmployee {
       data: null as never,
     };
   }
-  const statusRaw = (row.재직상태 ?? row.상태 ?? "").toString().trim();
+  const statusRaw = (col(row, "재직상태", "상태") ?? "").toString().trim();
   const status: EmployeeStatus = STATUS_MAP[statusRaw] ?? "active";
   const isLeave = status === "on_leave";
-  const leaveReasonRaw = (row.휴직사유 ?? "").toString().trim();
+  const leaveReasonRaw = (col(row, "휴직사유") ?? "").toString().trim();
   const leaveReason: LeaveReason | null = isLeave
     ? LEAVE_REASON_LABEL_TO_VALUE[leaveReasonRaw] ?? null
     : null;
   return {
     ok: true,
     data: {
-      employee_number: cleanString(row.직원번호 ?? row.사번),
+      employee_number: cleanString(col(row, "직원번호", "사번")),
       name,
-      headquarters: cleanString(row.본부),
-      email: cleanString(row.사내메일 ?? row.이메일),
-      personal_email: cleanString(row.외부메일),
-      phone: cleanString(row.휴대전화 ?? row.연락처),
-      department: cleanString(row.소속 ?? row.부서),
-      part: cleanString(row.파트),
-      position: cleanString(row.직책 ?? row.직급),
-      work_location: cleanString(row.근무지),
-      hire_date: normalizeDate(row.입사확정일자 ?? row.입사일),
-      first_work_date: normalizeDate(row.출근일),
-      resignation_date: normalizeDate(row.퇴사일),
-      last_work_date: normalizeDate(row.마지막근무일),
+      headquarters: cleanString(col(row, "본부")),
+      email: cleanString(col(row, "사내메일", "이메일")),
+      personal_email: cleanString(col(row, "외부메일")),
+      phone: cleanString(col(row, "휴대전화", "연락처")),
+      department: cleanString(col(row, "소속", "부서")),
+      part: cleanString(col(row, "파트")),
+      position: cleanString(col(row, "직책", "직급")),
+      work_location: cleanString(col(row, "근무지")),
+      hire_date: normalizeDate(col(row, "입사확정일자", "입사 확정일자", "입사일")),
+      first_work_date: normalizeDate(col(row, "출근일")),
+      resignation_date: normalizeDate(col(row, "퇴사일")),
+      last_work_date: normalizeDate(col(row, "마지막근무일", "마지막 근무일")),
       status,
-      leave_start_date: normalizeDate(row.휴직일자 ?? row.휴직시작일),
-      leave_end_date: normalizeDate(row.휴직종료예정일 ?? row.휴직종료일),
+      leave_start_date: normalizeDate(col(row, "휴직일자", "휴직시작일")),
+      leave_end_date: normalizeDate(col(row, "휴직종료예정일", "휴직종료 예정일", "휴직종료일")),
       leave_reason: leaveReason,
-      return_from_leave_date: normalizeDate(row.복직일자),
-      badge_card_returned: cleanString(row.사원증법인카드반납),
+      return_from_leave_date: normalizeDate(col(row, "복직일자")),
+      badge_card_returned: cleanString(col(row, "사원증법인카드반납", "사원증/법인카드 반납여부", "사원증/법인카드반납")),
       leave_reason_detail:
-        isLeave && leaveReason === "other" ? cleanString(row.휴직사유상세) : null,
-      notes: cleanString(row.메모),
+        isLeave && leaveReason === "other" ? cleanString(col(row, "휴직사유상세")) : null,
+      notes: cleanString(col(row, "비고", "메모")),
     },
   };
 }
@@ -237,34 +221,46 @@ export default function ImportPage() {
 
   function downloadTemplate() {
     const headers = [
-      "사번",
-      "이름",
-      "이메일",
-      "연락처",
-      "부서",
-      "파트",
-      "직급",
-      "입사일",
+      "입력일",
+      "직원번호",
+      "성명",
+      "본부",
+      "소속",
+      "직책",
+      "근무지",
+      "재직상태",
+      "입사확정일자",
+      "출근일",
       "퇴사일",
-      "상태",
-      "휴직시작일",
-      "휴직종료일",
-      "휴직사유",
-      "휴직사유상세",
-      "메모",
+      "마지막근무일",
+      "휴직일자",
+      "휴직종료예정일",
+      "복직일자",
+      "휴대전화",
+      "사내메일",
+      "외부메일",
+      "비고",
+      "사원증법인카드반납",
     ];
     const sample = [
-      "EMP001",
+      "",
+      "11605",
       "홍길동",
-      "hong@example.com",
-      "010-1234-5678",
-      "modeling",
-      "1파트",
-      "사원",
-      "2025-01-15",
+      "Animation Studios",
+      "Modeling팀 1파트",
+      "팀원",
       "",
       "재직",
+      "2025-01-15",
+      "2025-01-20",
       "",
+      "",
+      "",
+      "",
+      "",
+      "010-1234-5678",
+      "hong@locus.com",
+      "hong@naver.com",
       "",
       "",
       "",
@@ -450,23 +446,19 @@ export default function ImportPage() {
             <div className="text-gray-600 mb-1">감지된 컬럼 헤더:</div>
             <div className="flex flex-wrap gap-1">
               {detectedHeaders.map((h, i) => {
-                const known = [
-                  "사번",
-                  "이름",
-                  "이메일",
-                  "연락처",
-                  "부서",
-                  "파트",
-                  "직급",
-                  "입사일",
-                  "퇴사일",
-                  "상태",
-                  "휴직시작일",
-                  "휴직종료일",
-                  "휴직사유",
-                  "휴직사유상세",
-                  "메모",
-                ].includes(h);
+                const knownSet = new Set([
+                  "입력일", "직원번호", "사번", "성명", "이름", "본부",
+                  "소속", "부서", "파트", "직책", "직급", "근무지",
+                  "재직상태", "상태", "입사확정일자", "입사 확정일자", "입사일",
+                  "출근일", "퇴사일", "마지막근무일", "마지막 근무일",
+                  "휴직일자", "휴직시작일", "휴직종료예정일", "휴직종료 예정일",
+                  "휴직종료일", "복직일자", "휴대전화", "연락처",
+                  "사내메일", "이메일", "외부메일", "비고", "메모",
+                  "사원증법인카드반납", "사원증/법인카드 반납여부", "사원증/법인카드반납",
+                  "휴직사유", "휴직사유상세",
+                ]);
+                const known = knownSet.has(h) ||
+                  [...knownSet].some((k) => k.replace(/[\s/]/g, "").toLowerCase() === h.replace(/[\s/]/g, "").toLowerCase());
                 return (
                   <span
                     key={i}
