@@ -119,6 +119,7 @@ export default function EmployeeTable({
             <th className="text-left px-3 py-2">비고</th>
             <th className="text-left px-3 py-2">사원증/법인카드</th>
             <th className="text-left px-3 py-2">기간</th>
+            <th className="text-left px-3 py-2 w-10"></th>
           </tr>
         </thead>
         <tbody>
@@ -292,10 +293,21 @@ function Row({
             {calcTenure(emp.hire_date)}
           </span>
         </td>
+        {/* 삭제 */}
+        <td className="px-2 py-1 align-middle whitespace-nowrap">
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-gray-300 hover:text-red-600 text-xs"
+            title="직원 삭제"
+          >
+            ✕
+          </button>
+        </td>
       </tr>
       {isExpanded && (
         <tr className="bg-gray-50 border-t border-gray-100">
-          <td colSpan={22} className="px-4 py-3">
+          <td colSpan={23} className="px-4 py-3">
             <ExpandedArea emp={emp} onSaveField={onSaveField} onDelete={onDelete} />
             {errorText && (
               <p className="text-sm text-red-700 mt-2">오류: {errorText}</p>
@@ -305,7 +317,7 @@ function Row({
       )}
       {!isExpanded && errorText && (
         <tr>
-          <td colSpan={22} className="px-4 py-1 text-sm text-red-700">
+          <td colSpan={23} className="px-4 py-1 text-sm text-red-700">
             오류: {errorText}
           </td>
         </tr>
