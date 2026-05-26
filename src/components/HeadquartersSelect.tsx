@@ -2,8 +2,6 @@
 
 import { HEADQUARTERS_ORDER } from "@/lib/types";
 
-const DATALIST_ID = "headquarters-options";
-
 export default function HeadquartersSelect({
   value,
   onChange,
@@ -13,20 +11,20 @@ export default function HeadquartersSelect({
   onChange: (v: string) => void;
   className?: string;
 }) {
+  const inList = !value || HEADQUARTERS_ORDER.some((h) => h === value);
   return (
-    <>
-      <input
-        list={DATALIST_ID}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="선택 또는 직접 입력"
-        className={className}
-      />
-      <datalist id={DATALIST_ID}>
-        {HEADQUARTERS_ORDER.map((h) => (
-          <option key={h} value={h} />
-        ))}
-      </datalist>
-    </>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={className}
+    >
+      <option value="">(선택)</option>
+      {HEADQUARTERS_ORDER.map((h) => (
+        <option key={h} value={h}>{h}</option>
+      ))}
+      {!inList && (
+        <option value={value}>{value}</option>
+      )}
+    </select>
   );
 }
