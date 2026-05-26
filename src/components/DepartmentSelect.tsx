@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { DEPARTMENT_ORDER } from "@/lib/types";
 
 export default function DepartmentSelect({
@@ -11,7 +12,22 @@ export default function DepartmentSelect({
   onChange: (v: string) => void;
   className?: string;
 }) {
-  const inList = !value || DEPARTMENT_ORDER.some(
+  const [options, setOptions] = useState<string[]>(DEPARTMENT_ORDER);
+
+  useEffect(() => {
+    fetch("/api/admin/lists")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.departments && data.departments.length > 0) {
+          setOptions(data.departments.map((d: { name: string }) => d.name));
+        }
+      })
+      .catch(() => {
+        // Fallback to hardcoded list (already set as default)
+      });
+  }, []);
+
+  const inList = !value || options.some(
     (d) => d.replace(/\s+/g, "").toLowerCase() === value.replace(/\s+/g, "").toLowerCase(),
   );
   return (
@@ -24,7 +40,7 @@ export default function DepartmentSelect({
       className={className}
     >
       <option value="">(선택)</option>
-      {DEPARTMENT_ORDER.map((d) => (
+      {options.map((d) => (
         <option key={d} value={d}>{d}</option>
       ))}
       {!inList && (

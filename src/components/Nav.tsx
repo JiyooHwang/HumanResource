@@ -14,6 +14,7 @@ export default function Nav({ email }: { email: string }) {
             <Link href="/employees?status=on_leave" className="hover:text-gray-900">휴직</Link>
             <Link href="/employees?status=resigned" className="hover:text-gray-900">퇴직</Link>
             <Link href="/team" className="hover:text-gray-900">팀원 관리</Link>
+            <Link href="/admin/lists" className="hover:text-gray-900">설정</Link>
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm">
