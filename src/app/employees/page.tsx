@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { departmentSortKey, positionTopPriority, type Employee } from "@/lib/types";
 import EmployeeTable from "./EmployeeTable";
 import LeaveNotice from "./LeaveNotice";
+import LeaveHistoryList from "./LeaveHistoryList";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +156,10 @@ export default async function EmployeesPage({
       </p>
 
       <EmployeeTable employees={sorted} currentStatus={sp.status} />
+
+      {sp.status === "on_leave" && (
+        <LeaveHistoryList />
+      )}
     </div>
   );
 }

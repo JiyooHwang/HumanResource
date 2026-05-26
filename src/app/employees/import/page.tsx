@@ -176,7 +176,15 @@ export default function ImportPage() {
     const allDetectedHeaders: string[] = [];
     const sheetSummary: string[] = [];
 
-    for (const sheetName of wb.SheetNames) {
+    // 연도 오름차순 정렬: 오래된 시트 먼저 → 최신 시트 나중에 처리
+    // 중복 시 마지막(최신) 데이터가 우선됨
+    const sortedSheets = [...wb.SheetNames].sort((a, b) => {
+      const ya = parseInt((a.match(/\d{4}/) ?? ["9999"])[0]);
+      const yb = parseInt((b.match(/\d{4}/) ?? ["9999"])[0]);
+      return ya - yb;
+    });
+
+    for (const sheetName of sortedSheets) {
       const sheet = wb.Sheets[sheetName];
       const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
 
