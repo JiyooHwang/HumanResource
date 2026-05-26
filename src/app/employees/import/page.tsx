@@ -235,27 +235,39 @@ export default function ImportPage() {
 
     setDetectedHeaders(allDetectedHeaders);
 
-    // 중복 검사: 기존 직원의 사번/이름과 대조
+    // 중복 검사: 기존 직원의 사번/이름+본부/소속 대조 (동명이인 구분)
     const { data: existing } = await supabase
       .from("employees")
-      .select("id, name, employee_number");
+      .select("id, name, employee_number, department, headquarters");
     const byNumber = new Map<string, string>();
-    const byName = new Map<string, string>();
+    const byNameDept = new Map<string, string>();
+    const nameCount = new Map<string, number>();
     (existing ?? []).forEach((e) => {
       const num = (e.employee_number ?? "").trim().toLowerCase();
       const nm = (e.name ?? "").trim().toLowerCase();
+      const dept = (e.department ?? "").trim().toLowerCase();
+      const hq = (e.headquarters ?? "").trim().toLowerCase();
       if (num) byNumber.set(num, e.id);
-      if (nm) byName.set(nm, e.id);
+      if (nm) {
+        nameCount.set(nm, (nameCount.get(nm) ?? 0) + 1);
+        byNameDept.set(nm, e.id);
+        if (dept) byNameDept.set(`${nm}|${dept}`, e.id);
+        if (hq) byNameDept.set(`${nm}|${hq}`, e.id);
+      }
     });
 
     const seenNumbers = new Set<string>();
-    const seenNames = new Set<string>();
+    const seenComposite = new Set<string>();
     const marked = allParsed.map((p) => {
       if (!p.ok) return p;
       const num = (p.data.employee_number ?? "").trim().toLowerCase();
       const nm = p.data.name.trim().toLowerCase();
+      const dept = (p.data.department ?? "").trim().toLowerCase();
+      const hq = (p.data.headquarters ?? "").trim().toLowerCase();
       let dup = false;
       let existingId: string | undefined;
+
+      // 1. 사번 매칭
       if (num) {
         if (byNumber.has(num)) {
           dup = true;
@@ -265,15 +277,33 @@ export default function ImportPage() {
         }
         seenNumbers.add(num);
       }
+
+      // 2. 이름 매칭 (동명이인 구분)
       if (!dup && nm) {
-        if (byName.has(nm)) {
-          dup = true;
-          existingId = byName.get(nm);
-        } else if (seenNames.has(nm)) {
+        const count = nameCount.get(nm) ?? 0;
+        if (count === 1) {
+          // 유일한 이름 — 이름만으로 매칭
+          existingId = byNameDept.get(nm);
+          if (existingId) dup = true;
+        } else if (count > 1) {
+          // 동명이인 — 소속 또는 본부까지 일치해야 매칭
+          let found = dept ? byNameDept.get(`${nm}|${dept}`) : undefined;
+          if (!found && hq) found = byNameDept.get(`${nm}|${hq}`);
+          if (found) {
+            existingId = found;
+            dup = true;
+          }
+          // 구분 안 되면 신규로 취급 (합치지 않음)
+        }
+
+        // 파일 내 중복 체크 (이름+소속 조합)
+        const compositeKey = dept ? `${nm}|${dept}` : hq ? `${nm}|${hq}` : nm;
+        if (!dup && seenComposite.has(compositeKey)) {
           dup = true;
         }
-        seenNames.add(nm);
+        seenComposite.add(compositeKey);
       }
+
       return { ...p, duplicate: dup, existingId };
     });
 
