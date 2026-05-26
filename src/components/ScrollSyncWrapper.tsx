@@ -46,19 +46,19 @@ export default function ScrollSyncWrapper({
   return (
     <>
       <div
-        ref={topBarRef}
-        onScroll={onTopScroll}
-        className="overflow-x-auto sticky top-0 z-10 bg-white border-b border-gray-200 rounded-t-lg"
-        style={{ height: 16 }}
-      >
-        <div style={{ width: innerWidth, height: 1 }} />
-      </div>
-      <div
         ref={contentRef}
         onScroll={onContentScroll}
         className="overflow-x-auto"
       >
         {children}
+      </div>
+      <div
+        ref={topBarRef}
+        onScroll={onTopScroll}
+        className="overflow-x-auto sticky bottom-0 z-10 bg-white border-t border-gray-200"
+        style={{ height: 16 }}
+      >
+        <div style={{ width: innerWidth, height: 1 }} />
       </div>
     </>
   );
