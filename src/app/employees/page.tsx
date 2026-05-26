@@ -88,7 +88,9 @@ export default async function EmployeesPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{title}</h1>
+        <h1 className="text-2xl font-semibold">
+          {title} <span className="text-base text-gray-500 font-normal">{sorted.length}명</span>
+        </h1>
         <div className="flex gap-2">
           <a
             href={`/api/employees/export${sp.status ? `?status=${sp.status}` : ""}`}

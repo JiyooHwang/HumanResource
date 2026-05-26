@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import DepartmentSelect from "@/components/DepartmentSelect";
+import ScrollSyncWrapper from "@/components/ScrollSyncWrapper";
 import {
   LEAVE_REASON_LABEL,
   type Employee,
@@ -78,7 +79,8 @@ export default function EmployeeTable({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+    <div className="bg-white border border-gray-200 rounded-lg">
+      <ScrollSyncWrapper>
       <table className="min-w-[3200px] w-full text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr className="whitespace-nowrap">
@@ -124,6 +126,7 @@ export default function EmployeeTable({
           ))}
         </tbody>
       </table>
+      </ScrollSyncWrapper>
     </div>
   );
 }
