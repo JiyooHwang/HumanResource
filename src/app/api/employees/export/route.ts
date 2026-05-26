@@ -3,21 +3,29 @@ import { createClient } from "@/lib/supabase/server";
 import { LEAVE_REASON_LABEL, type Employee } from "@/lib/types";
 
 const HEADERS = [
-  "사번",
-  "이름",
-  "이메일",
-  "연락처",
-  "부서",
+  "입력일",
+  "직원번호",
+  "성명",
+  "본부",
+  "소속",
   "파트",
-  "직급",
-  "입사일",
+  "직책",
+  "근무지",
+  "재직상태",
+  "입사확정일자",
+  "출근일",
   "퇴사일",
-  "상태",
-  "휴직시작일",
-  "휴직종료일",
+  "마지막근무일",
+  "휴직일자",
+  "휴직종료예정일",
+  "복직일자",
+  "휴대전화",
+  "사내메일",
+  "외부메일",
+  "비고",
+  "사원증법인카드반납",
   "휴직사유",
   "휴직사유상세",
-  "메모",
 ];
 
 function csvEscape(v: unknown): string {
@@ -53,27 +61,34 @@ export async function GET(request: Request) {
   const employees = (data ?? []) as Employee[];
   const rows = employees.map((e) =>
     [
+      e.created_at ? new Date(e.created_at).toLocaleDateString("ko-KR") : "",
       e.employee_number,
       e.name,
-      e.email,
-      e.phone,
+      e.headquarters,
       e.department,
       e.part,
       e.position,
-      e.hire_date,
-      e.resignation_date,
+      e.work_location,
       statusKo(e.status),
+      e.hire_date,
+      e.first_work_date,
+      e.resignation_date,
+      e.last_work_date,
       e.leave_start_date,
       e.leave_end_date,
+      e.return_from_leave_date,
+      e.phone,
+      e.email,
+      e.personal_email,
+      e.notes,
+      e.badge_card_returned,
       e.leave_reason ? LEAVE_REASON_LABEL[e.leave_reason] : null,
       e.leave_reason_detail,
-      e.notes,
     ]
       .map(csvEscape)
       .join(","),
   );
 
-  // Excel 한글 깨짐 방지 BOM
   const csv = "﻿" + HEADERS.join(",") + "\n" + rows.join("\n");
   const filename = `employees_${new Date().toISOString().slice(0, 10)}.csv`;
 

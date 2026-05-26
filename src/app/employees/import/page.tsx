@@ -11,21 +11,39 @@ import {
 } from "@/lib/types";
 
 type Row = {
+  직원번호?: string;
   사번?: string;
+  성명?: string;
   이름?: string;
-  이메일?: string;
-  연락처?: string;
+  본부?: string;
+  소속?: string;
   부서?: string;
   파트?: string;
+  직책?: string;
   직급?: string;
-  입사일?: string;
-  퇴사일?: string;
+  근무지?: string;
+  재직상태?: string;
   상태?: string;
+  입사확정일자?: string;
+  입사일?: string;
+  출근일?: string;
+  퇴사일?: string;
+  마지막근무일?: string;
+  휴직일자?: string;
   휴직시작일?: string;
+  휴직종료예정일?: string;
   휴직종료일?: string;
+  복직일자?: string;
+  휴대전화?: string;
+  연락처?: string;
+  사내메일?: string;
+  이메일?: string;
+  외부메일?: string;
+  비고?: string;
+  메모?: string;
+  사원증법인카드반납?: string;
   휴직사유?: string;
   휴직사유상세?: string;
-  메모?: string;
 };
 
 type ParsedEmployee = {
@@ -36,18 +54,25 @@ type ParsedEmployee = {
   data: {
     employee_number: string | null;
     name: string;
+    headquarters: string | null;
     email: string | null;
+    personal_email: string | null;
     phone: string | null;
     department: string | null;
     part: string | null;
     position: string | null;
+    work_location: string | null;
     hire_date: string | null;
+    first_work_date: string | null;
     resignation_date: string | null;
+    last_work_date: string | null;
     status: EmployeeStatus;
     leave_start_date: string | null;
     leave_end_date: string | null;
     leave_reason: LeaveReason | null;
     leave_reason_detail: string | null;
+    return_from_leave_date: string | null;
+    badge_card_returned: string | null;
     notes: string | null;
   };
 };
@@ -90,7 +115,7 @@ function normalizeDate(v: unknown): string | null {
 }
 
 function parseRow(row: Row, index: number): ParsedEmployee {
-  const name = (row.이름 ?? "").toString().trim();
+  const name = (row.성명 ?? row.이름 ?? "").toString().trim();
   if (!name) {
     return {
       ok: false,
@@ -98,7 +123,7 @@ function parseRow(row: Row, index: number): ParsedEmployee {
       data: null as never,
     };
   }
-  const statusRaw = (row.상태 ?? "").toString().trim();
+  const statusRaw = (row.재직상태 ?? row.상태 ?? "").toString().trim();
   const status: EmployeeStatus = STATUS_MAP[statusRaw] ?? "active";
   const isLeave = status === "on_leave";
   const leaveReasonRaw = (row.휴직사유 ?? "").toString().trim();
@@ -108,19 +133,26 @@ function parseRow(row: Row, index: number): ParsedEmployee {
   return {
     ok: true,
     data: {
-      employee_number: cleanString(row.사번),
+      employee_number: cleanString(row.직원번호 ?? row.사번),
       name,
-      email: cleanString(row.이메일),
-      phone: cleanString(row.연락처),
-      department: cleanString(row.부서),
+      headquarters: cleanString(row.본부),
+      email: cleanString(row.사내메일 ?? row.이메일),
+      personal_email: cleanString(row.외부메일),
+      phone: cleanString(row.휴대전화 ?? row.연락처),
+      department: cleanString(row.소속 ?? row.부서),
       part: cleanString(row.파트),
-      position: cleanString(row.직급),
-      hire_date: normalizeDate(row.입사일),
+      position: cleanString(row.직책 ?? row.직급),
+      work_location: cleanString(row.근무지),
+      hire_date: normalizeDate(row.입사확정일자 ?? row.입사일),
+      first_work_date: normalizeDate(row.출근일),
       resignation_date: normalizeDate(row.퇴사일),
+      last_work_date: normalizeDate(row.마지막근무일),
       status,
-      leave_start_date: isLeave ? normalizeDate(row.휴직시작일) : null,
-      leave_end_date: isLeave ? normalizeDate(row.휴직종료일) : null,
+      leave_start_date: normalizeDate(row.휴직일자 ?? row.휴직시작일),
+      leave_end_date: normalizeDate(row.휴직종료예정일 ?? row.휴직종료일),
       leave_reason: leaveReason,
+      return_from_leave_date: normalizeDate(row.복직일자),
+      badge_card_returned: cleanString(row.사원증법인카드반납),
       leave_reason_detail:
         isLeave && leaveReason === "other" ? cleanString(row.휴직사유상세) : null,
       notes: cleanString(row.메모),
@@ -304,18 +336,25 @@ export default function ImportPage() {
         const patch: Record<string, unknown> = {};
         const d = r.data;
         if (d.employee_number) patch.employee_number = d.employee_number;
+        if (d.headquarters) patch.headquarters = d.headquarters;
         if (d.email) patch.email = d.email;
+        if (d.personal_email) patch.personal_email = d.personal_email;
         if (d.phone) patch.phone = d.phone;
         if (d.department) patch.department = d.department;
         if (d.part) patch.part = d.part;
         if (d.position) patch.position = d.position;
+        if (d.work_location) patch.work_location = d.work_location;
         if (d.hire_date) patch.hire_date = d.hire_date;
+        if (d.first_work_date) patch.first_work_date = d.first_work_date;
         if (d.resignation_date) patch.resignation_date = d.resignation_date;
+        if (d.last_work_date) patch.last_work_date = d.last_work_date;
         if (d.status) patch.status = d.status;
         if (d.leave_start_date) patch.leave_start_date = d.leave_start_date;
         if (d.leave_end_date) patch.leave_end_date = d.leave_end_date;
+        if (d.return_from_leave_date) patch.return_from_leave_date = d.return_from_leave_date;
         if (d.leave_reason) patch.leave_reason = d.leave_reason;
         if (d.leave_reason_detail) patch.leave_reason_detail = d.leave_reason_detail;
+        if (d.badge_card_returned) patch.badge_card_returned = d.badge_card_returned;
         if (d.notes) patch.notes = d.notes;
         if (Object.keys(patch).length === 0) {
           failures.push(`${d.name}: 업데이트할 값 없음 (모든 칸 비어있음)`);

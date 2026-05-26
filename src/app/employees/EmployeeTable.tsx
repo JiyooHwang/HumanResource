@@ -79,22 +79,31 @@ export default function EmployeeTable({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-      <table className="min-w-[2000px] w-full text-sm">
+      <table className="min-w-[3200px] w-full text-sm">
         <thead className="bg-gray-50 text-gray-600">
           <tr className="whitespace-nowrap">
             <th className="text-left px-3 py-2 w-8"></th>
-            <th className="text-left px-3 py-2">이름</th>
-            <th className="text-left px-3 py-2">사번</th>
-            <th className="text-left px-3 py-2">부서</th>
-            <th className="text-left px-3 py-2">파트</th>
-            <th className="text-left px-3 py-2">직급</th>
-            <th className="text-left px-3 py-2">이메일</th>
-            <th className="text-left px-3 py-2">연락처</th>
-            <th className="text-left px-3 py-2">입사일</th>
-            <th className="text-left px-3 py-2">상태</th>
-            <th className="text-left px-3 py-2">
-              {currentStatus === "resigned" ? "퇴사일" : "기간"}
-            </th>
+            <th className="text-left px-3 py-2">입력일</th>
+            <th className="text-left px-3 py-2">직원번호</th>
+            <th className="text-left px-3 py-2">성명</th>
+            <th className="text-left px-3 py-2">본부</th>
+            <th className="text-left px-3 py-2">소속</th>
+            <th className="text-left px-3 py-2">직책</th>
+            <th className="text-left px-3 py-2">근무지</th>
+            <th className="text-left px-3 py-2">재직상태</th>
+            <th className="text-left px-3 py-2">입사 확정일자</th>
+            <th className="text-left px-3 py-2">출근일</th>
+            <th className="text-left px-3 py-2">퇴사일</th>
+            <th className="text-left px-3 py-2">마지막 근무일</th>
+            <th className="text-left px-3 py-2">휴직일자</th>
+            <th className="text-left px-3 py-2">휴직종료 예정일</th>
+            <th className="text-left px-3 py-2">복직일자</th>
+            <th className="text-left px-3 py-2">휴대전화</th>
+            <th className="text-left px-3 py-2">사내메일</th>
+            <th className="text-left px-3 py-2">외부메일</th>
+            <th className="text-left px-3 py-2">비고</th>
+            <th className="text-left px-3 py-2">사원증/법인카드</th>
+            <th className="text-left px-3 py-2">기간</th>
           </tr>
         </thead>
         <tbody>
@@ -146,66 +155,63 @@ function Row({
             type="button"
             onClick={onToggleExpand}
             className="text-gray-400 hover:text-gray-700 w-6 h-6 flex items-center justify-center"
-            aria-label={isExpanded ? "접기" : "휴직 상세/삭제"}
-            title="휴직 상세 / 삭제"
+            aria-label={isExpanded ? "접기" : "상세/삭제"}
+            title="상세 / 삭제"
           >
             {isExpanded ? "▾" : "▸"}
           </button>
         </td>
-        <td className="px-3 py-2 align-middle whitespace-nowrap">
-          <Link href={`/employees/${emp.id}`} className="text-blue-600 hover:underline">
-            {emp.name}
-          </Link>
+        {/* 입력일 */}
+        <td className="px-2 py-1 align-middle min-w-[8rem] whitespace-nowrap text-gray-500 text-xs">
+          {emp.created_at ? new Date(emp.created_at).toLocaleDateString("ko-KR") : "-"}
         </td>
-        <td className="px-2 py-1 align-middle min-w-[8rem] whitespace-nowrap">
+        {/* 직원번호 */}
+        <td className="px-2 py-1 align-middle min-w-[7rem] whitespace-nowrap">
           <CellText
             value={emp.employee_number ?? ""}
             onSave={(v) => onSaveField({ employee_number: v || null })}
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle min-w-[18rem] whitespace-nowrap">
+        {/* 성명 */}
+        <td className="px-3 py-2 align-middle whitespace-nowrap">
+          <Link href={`/employees/${emp.id}`} className="text-blue-600 hover:underline">
+            {emp.name}
+          </Link>
+        </td>
+        {/* 본부 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText
+            value={emp.headquarters ?? ""}
+            onSave={(v) => onSaveField({ headquarters: v || null })}
+            placeholder="-"
+          />
+        </td>
+        {/* 소속 */}
+        <td className="px-2 py-1 align-middle min-w-[16rem] whitespace-nowrap">
           <CellDepartment
             value={emp.department ?? ""}
             onSave={(v) => onSaveField({ department: v || null })}
           />
         </td>
-        <td className="px-2 py-1 align-middle min-w-[9rem] whitespace-nowrap">
-          <CellText
-            value={emp.part ?? ""}
-            onSave={(v) => onSaveField({ part: v || null })}
-            placeholder="-"
-          />
-        </td>
-        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+        {/* 직책 */}
+        <td className="px-2 py-1 align-middle min-w-[8rem] whitespace-nowrap">
           <CellText
             value={emp.position ?? ""}
             onSave={(v) => onSaveField({ position: v || null })}
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle min-w-[12rem] whitespace-nowrap">
-          <CellText
-            value={emp.email ?? ""}
-            onSave={(v) => onSaveField({ email: v || null })}
-            placeholder="-"
-          />
-        </td>
+        {/* 근무지 */}
         <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
           <CellText
-            value={emp.phone ?? ""}
-            onSave={(v) => onSaveField({ phone: v || null })}
+            value={emp.work_location ?? ""}
+            onSave={(v) => onSaveField({ work_location: v || null })}
             placeholder="-"
           />
         </td>
-        <td className="px-2 py-1 align-middle min-w-[11rem] whitespace-nowrap">
-          <CellText
-            type="date"
-            value={emp.hire_date ?? ""}
-            onSave={(v) => onSaveField({ hire_date: v || null })}
-          />
-        </td>
-        <td className="px-2 py-1 align-middle min-w-[8rem] whitespace-nowrap">
+        {/* 재직상태 */}
+        <td className="px-2 py-1 align-middle min-w-[7rem] whitespace-nowrap">
           <select
             value={emp.status}
             onChange={(e) => onChangeStatus(e.target.value as EmployeeStatus)}
@@ -217,31 +223,64 @@ function Row({
             <option value="resigned">퇴직</option>
           </select>
         </td>
-        <td className="px-2 py-1 align-middle min-w-[19rem] whitespace-nowrap">
-          {emp.status === "resigned" ? (
-            <CellText
-              type="date"
-              value={emp.resignation_date ?? ""}
-              onSave={(v) => onSaveField({ resignation_date: v || null })}
-            />
-          ) : emp.status === "on_leave" ? (
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              className="text-left text-gray-700 hover:text-gray-900 underline-offset-2 hover:underline"
-            >
-              {formatLeavePeriod(emp)}
-            </button>
-          ) : (
-            <span className="text-gray-700" title="입사일 기준 근속 기간">
-              {calcTenure(emp.hire_date)}
-            </span>
-          )}
+        {/* 입사 확정일자 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText type="date" value={emp.hire_date ?? ""} onSave={(v) => onSaveField({ hire_date: v || null })} />
+        </td>
+        {/* 출근일 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText type="date" value={emp.first_work_date ?? ""} onSave={(v) => onSaveField({ first_work_date: v || null })} />
+        </td>
+        {/* 퇴사일 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText type="date" value={emp.resignation_date ?? ""} onSave={(v) => onSaveField({ resignation_date: v || null })} />
+        </td>
+        {/* 마지막 근무일 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText type="date" value={emp.last_work_date ?? ""} onSave={(v) => onSaveField({ last_work_date: v || null })} />
+        </td>
+        {/* 휴직일자 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText type="date" value={emp.leave_start_date ?? ""} onSave={(v) => onSaveField({ leave_start_date: v || null })} />
+        </td>
+        {/* 휴직종료 예정일 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText type="date" value={emp.leave_end_date ?? ""} onSave={(v) => onSaveField({ leave_end_date: v || null })} />
+        </td>
+        {/* 복직일자 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText type="date" value={emp.return_from_leave_date ?? ""} onSave={(v) => onSaveField({ return_from_leave_date: v || null })} />
+        </td>
+        {/* 휴대전화 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText value={emp.phone ?? ""} onSave={(v) => onSaveField({ phone: v || null })} placeholder="-" />
+        </td>
+        {/* 사내메일 */}
+        <td className="px-2 py-1 align-middle min-w-[14rem] whitespace-nowrap">
+          <CellText value={emp.email ?? ""} onSave={(v) => onSaveField({ email: v || null })} placeholder="-" />
+        </td>
+        {/* 외부메일 */}
+        <td className="px-2 py-1 align-middle min-w-[14rem] whitespace-nowrap">
+          <CellText value={emp.personal_email ?? ""} onSave={(v) => onSaveField({ personal_email: v || null })} placeholder="-" />
+        </td>
+        {/* 비고 */}
+        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
+          <CellText value={emp.notes ?? ""} onSave={(v) => onSaveField({ notes: v || null })} placeholder="-" />
+        </td>
+        {/* 사원증/법인카드 반납 */}
+        <td className="px-2 py-1 align-middle min-w-[8rem] whitespace-nowrap">
+          <CellText value={emp.badge_card_returned ?? ""} onSave={(v) => onSaveField({ badge_card_returned: v || null })} placeholder="-" />
+        </td>
+        {/* 기간 (근속) */}
+        <td className="px-2 py-1 align-middle min-w-[8rem] whitespace-nowrap">
+          <span className="text-gray-700" title="입사일 기준 근속 기간">
+            {calcTenure(emp.hire_date)}
+          </span>
         </td>
       </tr>
       {isExpanded && (
         <tr className="bg-gray-50 border-t border-gray-100">
-          <td colSpan={11} className="px-4 py-3">
+          <td colSpan={22} className="px-4 py-3">
             <ExpandedArea emp={emp} onSaveField={onSaveField} onDelete={onDelete} />
             {errorText && (
               <p className="text-sm text-red-700 mt-2">오류: {errorText}</p>
@@ -251,7 +290,7 @@ function Row({
       )}
       {!isExpanded && errorText && (
         <tr>
-          <td colSpan={11} className="px-4 py-1 text-sm text-red-700">
+          <td colSpan={22} className="px-4 py-1 text-sm text-red-700">
             오류: {errorText}
           </td>
         </tr>
