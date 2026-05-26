@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import DepartmentSelect from "@/components/DepartmentSelect";
+import HeadquartersSelect from "@/components/HeadquartersSelect";
 import ScrollSyncWrapper from "@/components/ScrollSyncWrapper";
 import {
   LEAVE_REASON_LABEL,
@@ -183,11 +184,10 @@ function Row({
           </Link>
         </td>
         {/* 본부 */}
-        <td className="px-2 py-1 align-middle min-w-[10rem] whitespace-nowrap">
-          <CellText
+        <td className="px-2 py-1 align-middle min-w-[14rem] whitespace-nowrap">
+          <CellHeadquarters
             value={emp.headquarters ?? ""}
             onSave={(v) => onSaveField({ headquarters: v || null })}
-            placeholder="-"
           />
         </td>
         {/* 소속 */}
@@ -505,6 +505,49 @@ function CellDepartment({
       onBlurCapture={commit}
     >
       <DepartmentSelect
+        value={local}
+        onChange={setLocal}
+        className="!py-1 !px-2 text-sm bg-transparent border border-transparent hover:border-gray-200 focus:border-blue-400 focus:bg-white rounded"
+      />
+      {savedAt > 0 && (
+        <span className="absolute -right-1 top-1 text-green-600 text-xs">✓</span>
+      )}
+    </div>
+  );
+}
+
+function CellHeadquarters({
+  value,
+  onSave,
+}: {
+  value: string;
+  onSave: (v: string) => Promise<boolean> | void;
+}) {
+  const [local, setLocal] = useState(value);
+  const [focused, setFocused] = useState(false);
+  const [savedAt, setSavedAt] = useState(0);
+
+  useEffect(() => {
+    if (!focused) setLocal(value);
+  }, [value, focused]);
+
+  async function commit() {
+    setFocused(false);
+    if (local === value) return;
+    const ok = await onSave(local);
+    if (ok !== false) {
+      setSavedAt(Date.now());
+      setTimeout(() => setSavedAt(0), 1200);
+    }
+  }
+
+  return (
+    <div
+      className="relative"
+      onFocusCapture={() => setFocused(true)}
+      onBlurCapture={commit}
+    >
+      <HeadquartersSelect
         value={local}
         onChange={setLocal}
         className="!py-1 !px-2 text-sm bg-transparent border border-transparent hover:border-gray-200 focus:border-blue-400 focus:bg-white rounded"

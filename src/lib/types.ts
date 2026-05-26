@@ -93,6 +93,18 @@ export const DEFAULT_OFFBOARDING_TASKS = [
   "경력증명서 발급",
 ];
 
+export const HEADQUARTERS_ORDER = [
+  "주식회사 로커스",
+  "Studio X",
+  "VFX Studios",
+  "Animation Studios",
+  "로커스 실감영상기술연구소",
+  "로커스 기업부설창작연구소",
+  "로커스 AI 애니메이션연구소",
+  "전략본부",
+  "신규사업실",
+];
+
 // 부서 정렬 순서 (제작 과정 순). 목록에 없는 부서는 맨 뒤에 가나다순 배치.
 export const DEPARTMENT_ORDER = [
   "부사장",
