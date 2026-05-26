@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import DepartmentSelect from "@/components/DepartmentSelect";
+import HeadquartersSelect from "@/components/HeadquartersSelect";
 import {
   DEFAULT_ONBOARDING_TASKS,
   LEAVE_REASON_LABEL,
@@ -20,6 +21,7 @@ export default function NewEmployeePage() {
     employee_number: "",
     email: "",
     phone: "",
+    headquarters: "",
     department: "",
     part: "",
     position: "",
@@ -51,6 +53,7 @@ export default function NewEmployeePage() {
         employee_number: form.employee_number || null,
         email: form.email || null,
         phone: form.phone || null,
+        headquarters: form.headquarters || null,
         department: form.department || null,
         part: form.part || null,
         position: form.position || null,
@@ -110,7 +113,14 @@ export default function NewEmployeePage() {
             <input value={form.phone} onChange={(e) => update("phone", e.target.value)} />
           </div>
           <div>
-            <label>부서</label>
+            <label>본부</label>
+            <HeadquartersSelect
+              value={form.headquarters}
+              onChange={(v) => update("headquarters", v)}
+            />
+          </div>
+          <div>
+            <label>소속</label>
             <DepartmentSelect
               value={form.department}
               onChange={(v) => update("department", v)}
