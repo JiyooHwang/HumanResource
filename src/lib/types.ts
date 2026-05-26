@@ -135,6 +135,9 @@ export const DEPARTMENT_ORDER = [
   "Flame4팀",
   "AI팀",
   "DI팀",
+  "파이프라인",
+  "플랫폼",
+  "AI 에이전트",
 ];
 
 export function headquartersSortKey(hq: string | null | undefined): string {
