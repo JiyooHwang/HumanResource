@@ -14,14 +14,14 @@ export default async function EmployeesPage({
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
-  // 휴직 종료일이 지난 직원 자동 복귀 처리
-  const today = new Date().toISOString().slice(0, 10);
+  // 휴직 종료일이 지난 직원 자동 복귀 처리 (한국 시간 기준)
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
   const { data: expiredLeaves } = await supabase
     .from("employees")
     .select("id, leave_end_date")
     .eq("status", "on_leave")
     .not("leave_end_date", "is", null)
-    .lt("leave_end_date", today);
+    .lte("leave_end_date", today);
 
   if (expiredLeaves && expiredLeaves.length > 0) {
     for (const e of expiredLeaves) {
