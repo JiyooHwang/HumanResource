@@ -149,6 +149,7 @@ export default function ImportPage() {
   const [rows, setRows] = useState<ParsedEmployee[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [detectedHeaders, setDetectedHeaders] = useState<string[]>([]);
+  const [sheetInfo, setSheetInfo] = useState<string[]>([]);
   const [seedOnboarding, setSeedOnboarding] = useState(true);
   const [updateExisting, setUpdateExisting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -161,36 +162,58 @@ export default function ImportPage() {
     const XLSX = await import("xlsx");
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: "array", cellDates: true });
-    const sheet = wb.Sheets[wb.SheetNames[0]];
 
-    // 제목 행 건너뛰기: 첫 10행 중 실제 컬럼 헤더가 있는 행을 찾음
     const KNOWN = ["성명", "이름", "직원번호", "사번", "본부", "소속", "부서", "입사확정일자", "입사일", "재직상태", "상태", "휴대전화", "연락처", "사내메일", "이메일"];
-    const allRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
-    let headerRowIndex = 0;
-    for (let i = 0; i < Math.min(allRows.length, 10); i++) {
-      const cells = (allRows[i] as unknown[]) ?? [];
-      const matches = cells.filter((c) =>
-        KNOWN.some((k) => k === String(c ?? "").trim() || k.replace(/\s/g, "") === String(c ?? "").trim().replace(/\s/g, "")),
-      );
-      if (matches.length >= 3) {
-        headerRowIndex = i;
-        break;
+
+    // 모든 시트 읽기
+    const allParsed: ParsedEmployee[] = [];
+    const allDetectedHeaders: string[] = [];
+    const sheetSummary: string[] = [];
+
+    for (const sheetName of wb.SheetNames) {
+      const sheet = wb.Sheets[sheetName];
+      const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
+
+      // 제목 행 건너뛰기: 첫 10행 중 실제 컬럼 헤더가 있는 행을 찾음
+      let headerRowIndex = -1;
+      for (let i = 0; i < Math.min(rawRows.length, 10); i++) {
+        const cells = (rawRows[i] as unknown[]) ?? [];
+        const matches = cells.filter((c) =>
+          KNOWN.some((k) => k === String(c ?? "").trim() || k.replace(/\s/g, "") === String(c ?? "").trim().replace(/\s/g, "")),
+        );
+        if (matches.length >= 3) {
+          headerRowIndex = i;
+          break;
+        }
       }
+
+      if (headerRowIndex === -1) {
+        sheetSummary.push(`${sheetName}: 헤더 미발견 (건너뜀)`);
+        continue;
+      }
+
+      const json = XLSX.utils.sheet_to_json<Row>(sheet, {
+        defval: "",
+        range: headerRowIndex,
+      });
+
+      // 첫 시트의 헤더만 표시
+      if (allDetectedHeaders.length === 0) {
+        const detectedRow = (rawRows[headerRowIndex] as unknown[]) ?? [];
+        allDetectedHeaders.push(
+          ...detectedRow.map((h) => (h === undefined || h === null ? "" : String(h))),
+        );
+      }
+
+      const parsed = json.map((r, i) => parseRow(r, i));
+      const validCount = parsed.filter((p) => p.ok).length;
+      sheetSummary.push(`${sheetName}: ${validCount}명`);
+      allParsed.push(...parsed);
     }
 
-    const json = XLSX.utils.sheet_to_json<Row>(sheet, {
-      defval: "",
-      range: headerRowIndex,
-    });
+    setDetectedHeaders(allDetectedHeaders);
 
-    const detectedRow = (allRows[headerRowIndex] as unknown[]) ?? [];
-    setDetectedHeaders(
-      detectedRow.map((h) => (h === undefined || h === null ? "" : String(h))),
-    );
-
-    const parsed = json.map((r, i) => parseRow(r, i));
-
-    // 중복 검사: 기존 직원의 사번/이름과 대조 (id도 확보해서 업데이트 옵션에 활용)
+    // 중복 검사: 기존 직원의 사번/이름과 대조
     const { data: existing } = await supabase
       .from("employees")
       .select("id, name, employee_number");
@@ -205,7 +228,7 @@ export default function ImportPage() {
 
     const seenNumbers = new Set<string>();
     const seenNames = new Set<string>();
-    const marked = parsed.map((p) => {
+    const marked = allParsed.map((p) => {
       if (!p.ok) return p;
       const num = (p.data.employee_number ?? "").trim().toLowerCase();
       const nm = p.data.name.trim().toLowerCase();
@@ -233,6 +256,7 @@ export default function ImportPage() {
     });
 
     setRows(marked);
+    setSheetInfo(sheetSummary);
   }
 
   function downloadTemplate() {
@@ -456,6 +480,17 @@ export default function ImportPage() {
           </button>
           {fileName && <span className="text-sm text-gray-600">{fileName}</span>}
         </div>
+
+        {sheetInfo.length > 0 && (
+          <div className="text-xs bg-blue-50 border border-blue-200 rounded p-2">
+            <div className="text-blue-800 font-medium mb-1">읽은 시트 ({sheetInfo.length}개):</div>
+            <div className="flex flex-wrap gap-2">
+              {sheetInfo.map((s, i) => (
+                <span key={i} className="px-2 py-0.5 rounded bg-blue-100 text-blue-800">{s}</span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {detectedHeaders.length > 0 && (
           <div className="text-xs bg-gray-50 border border-gray-200 rounded p-2">
