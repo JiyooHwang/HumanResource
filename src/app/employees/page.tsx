@@ -9,12 +9,12 @@ export const dynamic = "force-dynamic";
 export default async function EmployeesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; year?: string }>;
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
+  const year = sp.year ? parseInt(sp.year, 10) : null;
 
-  // 1차 정렬은 JS에서 커스텀 부서 순서로 적용 (Supabase에서는 직급/이름만 미리 정렬)
   let query = supabase
     .from("employees")
     .select("*")
@@ -23,10 +23,18 @@ export default async function EmployeesPage({
 
   if (sp.status && ["active", "on_leave", "resigned"].includes(sp.status)) {
     query = query.eq("status", sp.status);
-  } else {
-    // 전체 탭: 퇴직자 제외 (재직 + 휴직만)
+  } else if (!year) {
     query = query.in("status", ["active", "on_leave"]);
   }
+
+  // 연도별 재직 현황: 해당 연도 중 재직했던 사람
+  if (year) {
+    const yearStart = `${year}-01-01`;
+    const yearEnd = `${year}-12-31`;
+    query = query.or(`hire_date.is.null,hire_date.lte.${yearEnd}`);
+    query = query.or(`resignation_date.is.null,resignation_date.gte.${yearStart}`);
+  }
+
   if (sp.q) {
     query = query.or(
       `name.ilike.%${sp.q}%,email.ilike.%${sp.q}%,department.ilike.%${sp.q}%,position.ilike.%${sp.q}%,employee_number.ilike.%${sp.q}%`,
@@ -63,7 +71,11 @@ export default async function EmployeesPage({
     return 0; // 같은 파트 내에서는 이미 직급·이름 순으로 정렬됨
   });
 
-  const title =
+  const currentYear = new Date().getFullYear();
+  const yearOptions: number[] = [];
+  for (let y = currentYear; y >= 2015; y--) yearOptions.push(y);
+
+  let title =
     sp.status === "active"
       ? "재직 직원"
       : sp.status === "on_leave"
@@ -71,6 +83,7 @@ export default async function EmployeesPage({
         : sp.status === "resigned"
           ? "퇴직 직원"
           : "전체 직원";
+  if (year) title = `${year}년 재직 현황`;
 
   return (
     <div className="space-y-4">
@@ -114,6 +127,12 @@ export default async function EmployeesPage({
           <option value="active">재직</option>
           <option value="on_leave">휴직</option>
           <option value="resigned">퇴직</option>
+        </select>
+        <select name="year" defaultValue={sp.year ?? ""} className="w-32">
+          <option value="">전체 연도</option>
+          {yearOptions.map((y) => (
+            <option key={y} value={y}>{y}년</option>
+          ))}
         </select>
         <button
           type="submit"
