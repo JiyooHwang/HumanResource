@@ -138,6 +138,12 @@ export const DEPARTMENT_ORDER = [
   "파이프라인",
   "플랫폼",
   "AI 에이전트",
+  "경영지원실",
+  "HR팀",
+  "GA팀",
+  "EA팀",
+  "투자전략실",
+  "재무기획실",
 ];
 
 export function headquartersSortKey(hq: string | null | undefined): string {
