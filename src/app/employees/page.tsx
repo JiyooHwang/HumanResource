@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { departmentSortKey, positionTopPriority, type Employee } from "@/lib/types";
+import { departmentSortKey, headquartersSortKey, positionTopPriority, type Employee } from "@/lib/types";
 import EmployeeTable from "./EmployeeTable";
 import LeaveNotice from "./LeaveNotice";
 import LeaveHistoryList from "./LeaveHistoryList";
@@ -78,19 +78,23 @@ export default async function EmployeesPage({
   }
 
   const sorted = ((employees ?? []) as Employee[]).slice().sort((a, b) => {
-    // 1. 부사장/본부장은 부서와 무관하게 최상단
+    // 1. 부사장/본부장은 최상단
     const pa = positionTopPriority(a.position);
     const pb = positionTopPriority(b.position);
     if (pa !== pb) return pa - pb;
-    // 2. 부서 커스텀 순서
+    // 2. 본부별 정렬
+    const ha = headquartersSortKey(a.headquarters);
+    const hb = headquartersSortKey(b.headquarters);
+    if (ha !== hb) return ha < hb ? -1 : 1;
+    // 3. 같은 본부 내 소속(팀) 커스텀 순서
     const da = departmentSortKey(a.department);
     const db = departmentSortKey(b.department);
     if (da !== db) return da < db ? -1 : 1;
-    // 3. 같은 부서 내에서는 파트 가나다순
+    // 4. 같은 소속 내 파트 가나다순
     const partA = a.part ?? "";
     const partB = b.part ?? "";
     if (partA !== partB) return partA < partB ? -1 : 1;
-    return 0; // 같은 파트 내에서는 이미 직급·이름 순으로 정렬됨
+    return 0;
   });
 
   const currentYear = new Date().getFullYear();
