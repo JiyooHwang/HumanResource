@@ -48,8 +48,14 @@ const STATUS_MAP: Record<string, EmployeeStatus> = {
   active: "active",
   입사: "active",
   복직: "active",
+  "정규직 전환": "active",
+  "정규직전환": "active",
   휴직: "on_leave",
   on_leave: "on_leave",
+  무급: "on_leave",
+  무급가: "on_leave",
+  "무급휴가": "on_leave",
+  "무급휴직": "on_leave",
   퇴직: "resigned",
   퇴사: "resigned",
   resigned: "resigned",
@@ -107,7 +113,7 @@ function parseRow(row: Row, index: number): ParsedEmployee {
       data: null as never,
     };
   }
-  const statusRaw = (col(row, "재직상태", "상태") ?? "").toString().trim();
+  const statusRaw = (col(row, "재직상태", "상태", "현황") ?? "").toString().trim();
   const status: EmployeeStatus = STATUS_MAP[statusRaw] ?? "active";
   const isLeave = status === "on_leave";
   const leaveReasonRaw = (col(row, "휴직사유") ?? "").toString().trim();
@@ -120,16 +126,16 @@ function parseRow(row: Row, index: number): ParsedEmployee {
       employee_number: cleanString(col(row, "직원번호", "사번")),
       name,
       headquarters: cleanString(col(row, "본부")),
-      email: cleanString(col(row, "사내메일", "이메일")),
+      email: cleanString(col(row, "사내메일", "이메일", "이메일계정")),
       personal_email: cleanString(col(row, "외부메일")),
       phone: cleanString(col(row, "휴대전화", "연락처")),
-      department: cleanString(col(row, "소속", "부서")),
+      department: cleanString(col(row, "소속", "부서", "실")),
       part: cleanString(col(row, "파트")),
-      position: cleanString(col(row, "직책", "직급")),
-      work_location: cleanString(col(row, "근무지")),
-      hire_date: normalizeDate(col(row, "입사확정일자", "입사 확정일자", "입사일")),
+      position: cleanString(col(row, "직책", "직급", "직위")),
+      work_location: cleanString(col(row, "근무지", "팀")),
+      hire_date: normalizeDate(col(row, "입사확정일자", "입사 확정일자", "입사일", "정식일자")),
       first_work_date: normalizeDate(col(row, "출근일")),
-      resignation_date: normalizeDate(col(row, "퇴사일")),
+      resignation_date: normalizeDate(col(row, "퇴사일", "실제퇴사일")),
       last_work_date: normalizeDate(col(row, "마지막근무일", "마지막 근무일")),
       status,
       leave_start_date: normalizeDate(col(row, "휴직일자", "휴직시작일")),
@@ -163,7 +169,7 @@ export default function ImportPage() {
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: "array", cellDates: true });
 
-    const KNOWN = ["성명", "이름", "직원번호", "사번", "본부", "소속", "부서", "입사확정일자", "입사일", "재직상태", "상태", "휴대전화", "연락처", "사내메일", "이메일"];
+    const KNOWN = ["성명", "이름", "직원번호", "사번", "본부", "소속", "부서", "실", "팀", "입사확정일자", "입사일", "정식일자", "재직상태", "상태", "현황", "휴대전화", "연락처", "사내메일", "이메일", "이메일계정", "직책", "직급", "직위", "실제퇴사일", "채용형태"];
 
     // 모든 시트 읽기
     const allParsed: ParsedEmployee[] = [];
