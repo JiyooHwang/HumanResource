@@ -144,6 +144,9 @@ export const DEPARTMENT_ORDER = [
   "EA팀",
   "투자전략실",
   "재무기획실",
+  "기술연구팀",
+  "기술보안팀",
+  "CT기획팀",
 ];
 
 export function headquartersSortKey(hq: string | null | undefined): string {
