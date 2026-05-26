@@ -98,9 +98,9 @@ export const HEADQUARTERS_ORDER = [
   "Studio X",
   "VFX Studios",
   "Animation Studios",
-  "로커스 실감영상기술연구소",
-  "로커스 기업부설창작연구소",
-  "로커스 AI 애니메이션연구소",
+  "실감영상기술연구소",
+  "기업부설창작연구소",
+  "AI 애니메이션연구소",
   "전략본부",
   "신규사업실",
 ];
