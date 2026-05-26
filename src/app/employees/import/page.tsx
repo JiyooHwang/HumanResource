@@ -162,14 +162,30 @@ export default function ImportPage() {
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: "array", cellDates: true });
     const sheet = wb.Sheets[wb.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json<Row>(sheet, { defval: "" });
 
-    // 첫 행에서 실제로 감지된 헤더 목록 (헤더 이름 일치 디버깅용)
-    const headerRow = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })[0] as
-      | unknown[]
-      | undefined;
+    // 제목 행 건너뛰기: 첫 10행 중 실제 컬럼 헤더가 있는 행을 찾음
+    const KNOWN = ["성명", "이름", "직원번호", "사번", "본부", "소속", "부서", "입사확정일자", "입사일", "재직상태", "상태", "휴대전화", "연락처", "사내메일", "이메일"];
+    const allRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
+    let headerRowIndex = 0;
+    for (let i = 0; i < Math.min(allRows.length, 10); i++) {
+      const cells = (allRows[i] as unknown[]) ?? [];
+      const matches = cells.filter((c) =>
+        KNOWN.some((k) => k === String(c ?? "").trim() || k.replace(/\s/g, "") === String(c ?? "").trim().replace(/\s/g, "")),
+      );
+      if (matches.length >= 3) {
+        headerRowIndex = i;
+        break;
+      }
+    }
+
+    const json = XLSX.utils.sheet_to_json<Row>(sheet, {
+      defval: "",
+      range: headerRowIndex,
+    });
+
+    const detectedRow = (allRows[headerRowIndex] as unknown[]) ?? [];
     setDetectedHeaders(
-      (headerRow ?? []).map((h) => (h === undefined || h === null ? "" : String(h))),
+      detectedRow.map((h) => (h === undefined || h === null ? "" : String(h))),
     );
 
     const parsed = json.map((r, i) => parseRow(r, i));
