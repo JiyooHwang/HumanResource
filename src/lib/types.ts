@@ -175,15 +175,13 @@ export function departmentSortKey(dept: string | null | undefined): string {
 }
 
 // 부서와 무관하게 최상단으로 끌어올릴 직급 (제외 시 99 반환)
-const TOP_POSITIONS = ["사장", "부사장", "본부장", "CSO"];
-
 export function positionTopPriority(position: string | null | undefined): number {
   if (!position) return 99;
   const norm = position.replace(/\s+/g, "").toLowerCase();
-  for (let i = 0; i < TOP_POSITIONS.length; i++) {
-    const key = TOP_POSITIONS[i].replace(/\s+/g, "").toLowerCase();
-    // "부사장/본부장", "부사장님" 등 변형 허용: 키워드가 포함되어 있으면 매칭
-    if (norm.includes(key)) return i;
-  }
+  // "사장"이 "부사장"에 포함되므로 정확히 구분
+  if (/(?<!부)사장/.test(norm)) return 0; // 사장 (부사장 제외)
+  if (norm.includes("부사장")) return 1;
+  if (norm.includes("본부장")) return 2;
+  if (norm.includes("cso")) return 3;
   return 99;
 }
