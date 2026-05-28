@@ -13,6 +13,7 @@ export default function DepartmentSelect({
   className?: string;
 }) {
   const [options, setOptions] = useState<string[]>(DEPARTMENT_ORDER);
+  const [customMode, setCustomMode] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/lists")
@@ -22,19 +23,49 @@ export default function DepartmentSelect({
           setOptions(data.departments.map((d: { name: string }) => d.name));
         }
       })
-      .catch(() => {
-        // Fallback to hardcoded list (already set as default)
-      });
+      .catch(() => {});
   }, []);
 
   const inList = !value || options.some(
     (d) => d.replace(/\s+/g, "").toLowerCase() === value.replace(/\s+/g, "").toLowerCase(),
   );
+
+  // 목록에 없는 값이 이미 있으면 직접 입력 모드로
+  const isCustom = customMode || (!inList && !!value);
+
+  if (isCustom) {
+    return (
+      <div className="flex gap-1">
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="소속 직접 입력"
+          className={className}
+          autoFocus
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setCustomMode(false);
+            onChange("");
+          }}
+          className="text-xs text-gray-500 hover:text-gray-800 whitespace-nowrap px-1"
+          title="목록에서 선택"
+        >
+          목록
+        </button>
+      </div>
+    );
+  }
+
   return (
     <select
-      value={inList ? value : "__custom__"}
+      value={value}
       onChange={(e) => {
-        if (e.target.value === "__custom__") return;
+        if (e.target.value === "__custom__") {
+          setCustomMode(true);
+          return;
+        }
         onChange(e.target.value);
       }}
       className={className}
@@ -43,9 +74,7 @@ export default function DepartmentSelect({
       {options.map((d) => (
         <option key={d} value={d}>{d}</option>
       ))}
-      {!inList && (
-        <option value="__custom__">{value} (직접 입력)</option>
-      )}
+      <option value="__custom__">직접 입력...</option>
     </select>
   );
 }
