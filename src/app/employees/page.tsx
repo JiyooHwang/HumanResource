@@ -14,9 +14,9 @@ export default async function EmployeesPage({
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
-  // 휴직 종료일이 지난 직원 자동 복귀 처리 (한국 시간 기준, 1회 일괄)
+  // 휴직 종료일이 지난 직원 자동 복귀 처리 (비동기, 페이지 로드 안 막음)
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
-  await supabase
+  void supabase
     .from("employees")
     .update({ status: "active", return_from_leave_date: today })
     .eq("status", "on_leave")

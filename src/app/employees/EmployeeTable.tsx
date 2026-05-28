@@ -48,7 +48,11 @@ export default function EmployeeTable({
       setErrMsg({ id: empId, text: error.message });
       return false;
     }
-    router.refresh();
+    // 상태 변경처럼 다른 탭/정렬에 영향 주는 경우만 새로고침
+    // (일반 텍스트/날짜 변경은 셀이 이미 로컬로 표시 중)
+    if (patch.status || patch.department !== undefined || patch.headquarters !== undefined) {
+      router.refresh();
+    }
     return true;
   }
 
