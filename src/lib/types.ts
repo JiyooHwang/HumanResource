@@ -175,7 +175,7 @@ export function departmentSortKey(dept: string | null | undefined): string {
 }
 
 // 부서와 무관하게 최상단으로 끌어올릴 직급 (제외 시 99 반환)
-const TOP_POSITIONS = ["부사장", "본부장"];
+const TOP_POSITIONS = ["사장", "부사장", "본부장", "CSO"];
 
 export function positionTopPriority(position: string | null | undefined): number {
   if (!position) return 99;
