@@ -302,10 +302,10 @@ function Row({
           <button
             type="button"
             onClick={onDelete}
-            className="text-gray-300 hover:text-red-600 text-xs"
+            className="text-red-500 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 rounded px-2 py-0.5 text-xs"
             title="직원 삭제"
           >
-            ✕
+            삭제
           </button>
         </td>
       </tr>
