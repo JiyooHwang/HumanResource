@@ -15,6 +15,7 @@ async function requireAuth() {
 function tableFor(type: string) {
   if (type === "headquarters") return "headquarters_list";
   if (type === "department") return "department_list";
+  if (type === "part") return "part_list";
   return null;
 }
 
@@ -24,9 +25,10 @@ export async function GET() {
 
   try {
     const { supabase } = auth;
-    const [hqRes, deptRes] = await Promise.all([
+    const [hqRes, deptRes, partRes] = await Promise.all([
       supabase.from("headquarters_list").select("*").order("sort_order"),
       supabase.from("department_list").select("*").order("sort_order"),
+      supabase.from("part_list").select("*").order("sort_order"),
     ]);
     if (hqRes.error) return NextResponse.json({ error: hqRes.error.message }, { status: 500 });
     if (deptRes.error) return NextResponse.json({ error: deptRes.error.message }, { status: 500 });
@@ -34,6 +36,7 @@ export async function GET() {
     return NextResponse.json({
       headquarters: hqRes.data,
       departments: deptRes.data,
+      parts: partRes.data ?? [],
     });
   } catch (e) {
     return NextResponse.json(
@@ -52,7 +55,7 @@ export async function POST(request: Request) {
     const type = String(body.type ?? "");
     const name = String(body.name ?? "").trim();
     const table = tableFor(type);
-    if (!table) return NextResponse.json({ error: "type must be 'headquarters' or 'department'" }, { status: 400 });
+    if (!table) return NextResponse.json({ error: "type must be 'headquarters', 'department' or 'part'" }, { status: 400 });
     if (!name) return NextResponse.json({ error: "이름을 입력하세요." }, { status: 400 });
 
     const { supabase } = auth;
@@ -90,7 +93,7 @@ export async function PATCH(request: Request) {
     const type = String(body.type ?? "");
     const id = String(body.id ?? "");
     const table = tableFor(type);
-    if (!table) return NextResponse.json({ error: "type must be 'headquarters' or 'department'" }, { status: 400 });
+    if (!table) return NextResponse.json({ error: "type must be 'headquarters', 'department' or 'part'" }, { status: 400 });
     if (!id) return NextResponse.json({ error: "id 필수" }, { status: 400 });
 
     const { supabase } = auth;
@@ -133,7 +136,7 @@ export async function DELETE(request: Request) {
     const type = searchParams.get("type") ?? "";
     const id = searchParams.get("id") ?? "";
     const table = tableFor(type);
-    if (!table) return NextResponse.json({ error: "type must be 'headquarters' or 'department'" }, { status: 400 });
+    if (!table) return NextResponse.json({ error: "type must be 'headquarters', 'department' or 'part'" }, { status: 400 });
     if (!id) return NextResponse.json({ error: "id 필수" }, { status: 400 });
 
     const { supabase } = auth;

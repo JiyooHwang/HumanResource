@@ -9,11 +9,12 @@ type ListItem = {
   created_at: string;
 };
 
-type ListType = "headquarters" | "department";
+type ListType = "headquarters" | "department" | "part";
 
 export default function ListManager() {
   const [headquarters, setHeadquarters] = useState<ListItem[]>([]);
   const [departments, setDepartments] = useState<ListItem[]>([]);
+  const [parts, setParts] = useState<ListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +28,7 @@ export default function ListManager() {
       const data = await res.json();
       setHeadquarters(data.headquarters ?? []);
       setDepartments(data.departments ?? []);
+      setParts(data.parts ?? []);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -58,7 +60,7 @@ export default function ListManager() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <ListSection
         title="본부 목록"
         type="headquarters"
@@ -69,6 +71,12 @@ export default function ListManager() {
         title="소속 목록"
         type="department"
         items={departments}
+        onRefresh={fetchLists}
+      />
+      <ListSection
+        title="파트 목록"
+        type="part"
+        items={parts}
         onRefresh={fetchLists}
       />
     </div>

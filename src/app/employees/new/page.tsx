@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import DepartmentSelect from "@/components/DepartmentSelect";
 import HeadquartersSelect from "@/components/HeadquartersSelect";
+import PartSelect from "@/components/PartSelect";
 import {
   DEFAULT_ONBOARDING_TASKS,
   LEAVE_REASON_LABEL,
@@ -128,11 +129,7 @@ export default function NewEmployeePage() {
           </div>
           <div>
             <label>파트</label>
-            <input
-              value={form.part}
-              onChange={(e) => update("part", e.target.value)}
-              placeholder="예: 1파트, 캐릭터파트"
-            />
+            <PartSelect value={form.part} onChange={(v) => update("part", v)} />
           </div>
           <div>
             <label>직급</label>
