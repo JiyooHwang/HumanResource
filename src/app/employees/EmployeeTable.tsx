@@ -464,7 +464,8 @@ function CellText({
 
   useEffect(() => {
     if (!focused) setLocal(value);
-  }, [value, focused]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   async function commit() {
     setFocused(false);
@@ -514,7 +515,8 @@ function CellDepartment({
 
   useEffect(() => {
     if (!focused) setLocal(value);
-  }, [value, focused]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   async function commit() {
     setFocused(false);
@@ -555,9 +557,11 @@ function CellHeadquarters({
   const [focused, setFocused] = useState(false);
   const [savedAt, setSavedAt] = useState(0);
 
+  // value(prop) 가 바뀔 때만 local 동기화 — focused 변화 시 리셋 안 함
   useEffect(() => {
     if (!focused) setLocal(value);
-  }, [value, focused]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   async function commit() {
     setFocused(false);
