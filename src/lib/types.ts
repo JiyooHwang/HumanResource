@@ -174,7 +174,15 @@ export function departmentSortKey(dept: string | null | undefined): string {
   return "999_" + dept;
 }
 
-// 부서와 무관하게 최상단으로 끌어올릴 직급 (제외 시 99 반환)
+// 같은 본부/소속/파트 안에서 직책 순서 (낮을수록 위)
+export function positionRankWithinDept(position: string | null | undefined): number {
+  if (!position) return 99;
+  const norm = position.replace(/\s+/g, "").toLowerCase();
+  if (norm.includes("실장")) return 0;
+  if (norm.includes("팀장")) return 1;
+  if (norm.includes("파트장")) return 2;
+  return 99;
+}
 export function positionTopPriority(position: string | null | undefined): number {
   if (!position) return 99;
   const norm = position.replace(/\s+/g, "").toLowerCase();

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { departmentSortKey, headquartersSortKey, positionTopPriority, type Employee } from "@/lib/types";
+import { departmentSortKey, headquartersSortKey, positionRankWithinDept, positionTopPriority, type Employee } from "@/lib/types";
 import EmployeeTable from "./EmployeeTable";
 import LeaveNotice from "./LeaveNotice";
 import LeaveHistoryList from "./LeaveHistoryList";
@@ -82,6 +82,10 @@ export default async function EmployeesPage({
     const partA = a.part ?? "";
     const partB = b.part ?? "";
     if (partA !== partB) return partA < partB ? -1 : 1;
+    // 5. 같은 파트 안에서 직책 순서 (실장 > 팀장 > 파트장)
+    const wa = positionRankWithinDept(a.position);
+    const wb = positionRankWithinDept(b.position);
+    if (wa !== wb) return wa - wb;
     return 0;
   });
 
